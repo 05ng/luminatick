@@ -1,0 +1,32 @@
+{
+  "name": "@luminatick/server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migration:create": "wrangler d1 migrations create luminatick-db",
+    "migration:apply": "wrangler d1 migrations apply luminatick-db --local",
+    "seed": "npx tsx src/scripts/seed.ts --file seed.sql && npx wrangler d1 execute luminatick-db --local --file=seed.sql && node -e \"const fs=require('fs'); if(fs.existsSync('seed.sql')) fs.unlinkSync('seed.sql')\"",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "jose": "^6.2.2",
+    "otpauth": "^9.5.0",
+    "postal-mime": "^2.1.0",
+    "zod": "^3.0.0",
+    "@luminatick/shared": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240101.0",
+    "@faker-js/faker": "^10.4.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.0",
+    "better-sqlite3": "^12.9.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^4.1.4"
+  }
+}

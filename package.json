@@ -1,0 +1,31 @@
+{
+  "name": "luminatick",
+  "private": true,
+  "scripts": {
+    "dev:server": "npm run dev --workspace=apps/server",
+    "dev:dashboard": "npm run dev --workspace=apps/dashboard",
+    "dev:portal": "npm run dev --workspace=apps/portal",
+    "build:widget": "npm run build --workspace=apps/widget",
+    "db:migrate:local": "cd apps/server && npx wrangler d1 migrations apply luminatick-db --local",
+    "db:seed:local": "npx tsx apps/server/src/scripts/seed.ts --file apps/server/seed.sql && cd apps/server && npx wrangler d1 execute luminatick-db --local --file=seed.sql && node -e \"const fs=require('fs'); if(fs.existsSync('seed.sql')) fs.unlinkSync('seed.sql')\"",
+    "setup:prod": "node scripts/setup.js",
+    "deploy": "npm run deploy:server && npm run deploy:env && npm run deploy:dashboard && npm run deploy:portal && npm run deploy:widget",
+    "deploy:server": "cd apps/server && npx wrangler d1 migrations apply luminatick-db --remote && npx wrangler deploy",
+    "deploy:env": "node scripts/configure-frontends.js",
+    "deploy:dashboard": "npm run build --workspace=apps/dashboard && npx wrangler pages deploy apps/dashboard/dist --project-name=luminatick-dashboard",
+    "deploy:portal": "npm run build --workspace=apps/portal && npx wrangler pages deploy apps/portal/dist --project-name=luminatick-portal",
+    "deploy:widget": "npm run build --workspace=apps/widget && npx wrangler r2 object put luminatick-widget/lumina-widget.js --file apps/widget/dist/lumina-widget.js",
+    "secrets:prod": "node scripts/secrets.js",
+    "seed:prod": "npx tsx apps/server/src/scripts/seed.ts --file apps/server/seed.sql && cd apps/server && npx wrangler d1 execute luminatick-db --remote --file=seed.sql && node -e \"const fs=require('fs'); if(fs.existsSync('seed.sql')) fs.unlinkSync('seed.sql')\"",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "^5.0.0",
+    "wrangler": "^4.83.0"
+  }
+}

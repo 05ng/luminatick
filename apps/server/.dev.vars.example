@@ -1,0 +1,13 @@
+# Cloudflare Worker Local Environment Variables (Wrangler dev)
+# Copy to .dev.vars for local use.
+
+# JWT Secret for signing authentication tokens
+JWT_SECRET=dev_secret_key_change_me_in_production
+
+# Application Master Key for encrypting sensitive data in the database (e.g., tokens)
+# Must be a long, secure, and unpredictable string (at least 32 characters)
+APP_MASTER_KEY=dev_master_key_change_me_in_production
+
+# MFA Encryption Key for securing user TOTP secrets
+# Must be a long, secure, and unpredictable string (at least 32 characters)
+MFA_ENCRYPTION_KEY=dev_mfa_encryption_key_change_me_in_production

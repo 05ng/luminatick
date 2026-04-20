@@ -1,0 +1,2 @@
+ALTER TABLE knowledge_docs ADD COLUMN chunk_count INTEGER DEFAULT 0;
+ALTER TABLE articles ADD COLUMN chunk_count INTEGER DEFAULT 0;

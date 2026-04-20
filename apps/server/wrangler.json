@@ -1,0 +1,49 @@
+{
+        "name": "luminatick-server",
+        "main": "src/index.ts",
+        "compatibility_date": "2024-04-01",
+        "d1_databases": [
+                {
+                        "binding": "DB",
+                        "database_name": "luminatick-db",
+                        "database_id": "597c6389-7387-4bc6-95aa-6e65fad55097",
+                        "migrations_dir": "migrations"
+                }
+        ],
+        "r2_buckets": [
+                {
+                        "binding": "ATTACHMENTS_BUCKET",
+                        "bucket_name": "luminatick-attachments"
+                }
+        ],
+        "vectorize": [
+                {
+                        "binding": "VECTOR_INDEX",
+                        "index_name": "luminatick-index",
+                        "remote": true
+                }
+        ],
+        "durable_objects": {
+                "bindings": [
+                        {
+                                "name": "NOTIFICATION_DO",
+                                "class_name": "NotificationDO"
+                        }
+                ]
+        },
+        "migrations": [
+                {
+                        "tag": "v1",
+                        "new_sqlite_classes": [
+                                "NotificationDO"
+                        ]
+                }
+        ],
+        "ai": {
+                "binding": "AI",
+                "remote": true
+        },
+        "observability": {
+                "enabled": true
+        }
+}
