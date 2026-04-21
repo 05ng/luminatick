@@ -132,6 +132,8 @@ For a detailed guide, see [docs/deployment.md](docs/deployment.md).
    - Navigate to **Settings -> Channels -> Email** (or General Settings) and configure your **Outbound Email provider** (e.g., Resend API key).
    - *Important:* The **Customer Portal** relies on Passwordless Magic Link & OTP authentication. Users will not be able to log in until outbound email is configured to send the OTPs.
 
+> **Critical Security Note:** It is highly recommended to configure **Cloudflare Turnstile** to protect the customer portal and other public-facing forms from bots and spam tickets. This is a critical security recommendation for public-facing forms.
+
 ## Documentation
 - [Architecture Overview](docs/design-and-implementation-plan.md)
 - [Deployment Guide](docs/deployment.md)
