@@ -16,16 +16,7 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
     const knowledgeService = new KnowledgeService(this.env);
 
     if (action === 'create' || (action === 'update' && contentChanged)) {
-      // Step 1: Read content from DB/R2
-      const { content, title } = await step.do('fetch_content', async () => {
-        const contentStr = await knowledgeService.getArticleContent(documentId);
-        const doc = await this.env.DB.prepare('SELECT title FROM knowledge_docs WHERE id = ?')
-          .bind(documentId)
-          .first<{ title: string }>();
-        return { content: contentStr, title: doc?.title };
-      });
-
-      // Step 2: Delete old vectors if update
+      // Step 1: Delete old vectors if update
       if (action === 'update') {
         await step.do('delete_old_vectors', async () => {
           const doc = await this.env.DB.prepare('SELECT chunk_count FROM knowledge_docs WHERE id = ?')
@@ -38,12 +29,18 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
         });
       }
 
-      // Step 3: Vectorize
-      const chunkCount = await step.do('vectorize_content', async () => {
-        return await knowledgeService.processAndStoreVectors(documentId, content, 'document', categoryId, title);
+      // Step 2: Fetch and Vectorize
+      // Done in one step to prevent large text payloads from exceeding the 1MB workflow state limit.
+      const chunkCount = await step.do('fetch_and_vectorize', async () => {
+        const contentStr = await knowledgeService.getArticleContent(documentId);
+        const doc = await this.env.DB.prepare('SELECT title FROM knowledge_docs WHERE id = ?')
+          .bind(documentId)
+          .first<{ title: string }>();
+          
+        return await knowledgeService.processAndStoreVectors(documentId, contentStr, 'document', categoryId, doc?.title);
       });
 
-      // Step 4: Update DB Status
+      // Step 3: Update DB Status
       await step.do('update_status', async () => {
         await this.env.DB.prepare('UPDATE knowledge_docs SET status = ?, chunk_count = ? WHERE id = ?')
           .bind('active', chunkCount, documentId)
@@ -56,18 +53,17 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
         await knowledgeService.updateDocumentMetadata(documentId, categoryId);
       });
     } else if (action === 'qa_mark') {
-      const contentInfo = await step.do('fetch_qa_content', async () => {
-        const article = await this.env.DB.prepare('SELECT body, chunk_count FROM articles WHERE id = ?')
-          .bind(documentId)
-          .first<{ body: string, chunk_count: number }>();
-        if (!article) throw new Error('Article not found');
-        return article;
-      });
-
       if (qaType) {
-        const chunkCount = await step.do('vectorize_qa', async () => {
-          return await knowledgeService.processAndStoreVectors(documentId, contentInfo.body, 'qa');
+        // Fetch and vectorize in one step
+        const chunkCount = await step.do('fetch_and_vectorize_qa', async () => {
+          const article = await this.env.DB.prepare('SELECT body FROM articles WHERE id = ?')
+            .bind(documentId)
+            .first<{ body: string }>();
+          if (!article) throw new Error('Article not found');
+          
+          return await knowledgeService.processAndStoreVectors(documentId, article.body, 'qa');
         });
+        
         await step.do('update_qa_status', async () => {
           await this.env.DB.prepare('UPDATE articles SET qa_type = ?, chunk_count = ? WHERE id = ?')
             .bind(qaType, chunkCount, documentId)
@@ -75,7 +71,13 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
         });
       } else {
         await step.do('unmark_qa', async () => {
-          await knowledgeService.deleteQAVectors(documentId, contentInfo.chunk_count);
+          const article = await this.env.DB.prepare('SELECT chunk_count FROM articles WHERE id = ?')
+            .bind(documentId)
+            .first<{ chunk_count: number }>();
+            
+          if (article && article.chunk_count > 0) {
+            await knowledgeService.deleteQAVectors(documentId, article.chunk_count);
+          }
           await this.env.DB.prepare('UPDATE articles SET qa_type = NULL, chunk_count = 0 WHERE id = ?')
             .bind(documentId)
             .run();

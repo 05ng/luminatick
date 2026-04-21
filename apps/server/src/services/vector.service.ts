@@ -63,7 +63,7 @@ export class VectorService {
       if (!results.matches) return [];
 
       return results.matches
-        .filter((m) => m.score !== undefined && m.score >= 0.7)
+        .filter((m) => m.score !== undefined && m.score >= 0.5)
         .map((m) => m.metadata as unknown as VectorMetadata);
     } catch (error) {
       console.error('Vectorize Search Error:', error);
