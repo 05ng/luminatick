@@ -6,7 +6,7 @@ Luminatick is a decentralized, single-tenant ticketing system built specifically
 Luminatick is deeply inspired by Zammad and Cloudflare's serverless ecosystem. After many years of using Zammad to support customers, this project was created to bring those proven helpdesk workflows to a modern, lightning-fast edge infrastructure.
 
 ## Design Philosophy
-Luminatick was architected with three core principles in mind:
+Luminatick was architected with four core principles in mind:
 
 1. **Zero-Cost Out of the Box:** The system is purposefully designed to run comfortably within the **Cloudflare Free Tier**. By leveraging efficient data storage patterns (like hybrid R2 offloading) and intelligent HTTP polling, individuals and small teams can operate a fully-featured AI ticketing system without incurring monthly infrastructure costs.
 2. **Progressive Enhancement:** As your organization grows, Luminatick scales with you. For users on paid Cloudflare plans, the system seamlessly unlocks advanced capabilities—such as utilizing **Durable Objects and WebSockets** for ultra low-latency, real-time agent presence, and live dashboard updates.
@@ -133,6 +133,9 @@ For a detailed guide, see [docs/deployment.md](docs/deployment.md).
 - **Monorepo:** Use `npm` workspaces to manage dependencies across apps and packages.
 - **Type Safety:** Shared types in `/packages/shared` should be used by both frontend and backend.
 - **Widget Integrity:** Use Shadow DOM in the widget to prevent CSS conflicts with host websites.
+
+## Support
+For any inquiries or assistance, please reach out to us at [help@luminatick.com](mailto:help@luminatick.com).
 
 ## License
 MIT
