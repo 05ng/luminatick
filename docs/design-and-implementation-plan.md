@@ -6,7 +6,7 @@ Build an open-source, single-tenant, AI-first ticketing system designed for easy
 ## 2. Architecture & Components
 
 *   **Backend / API:** Cloudflare Workers (Handles Dashboard API, Widget API, and Public REST API).
-*   **Real-time Layer:** Dual-Mode Architecture (Free-Tier HTTP Polling with `document.visibilityState` OR Paid-Tier WebSockets via Durable Objects, controlled by global settings).
+*   **Real-time Layer:** Unified Architecture (Free-Tier Optimized WebSockets via Durable Objects with Hibernation and zero-cost Attachment storage).
 *   **Database:** Cloudflare D1 (SQLite) for structured metadata (Users, Tickets, Config, Automation Rules, API Keys). *Note: To overcome D1's 10GB storage limit, heavy payloads like article bodies are offloaded to R2 (Hybrid Offloading).*
 *   **Storage:** Cloudflare R2 for file attachments, the company logo, raw documents awaiting vectorization, and offloaded article bodies.
 *   **Vector Database:** Cloudflare Vectorize for semantic search of past tickets and knowledge base articles.
@@ -45,10 +45,10 @@ Automated cleanup is handled by a scheduled Cloudflare Worker (Cron Trigger):
 1.  **Ticket Deletion Scheduler:** Deletes Ticket ➔ Articles ➔ R2 Attachments ➔ Orphaned Users.
 2.  **User Deletion Scheduler:** Deletes User ➔ All associated Tickets/Articles/Attachments.
 
-### E. Dashboard Refresh Modes (Presence & Real-Time)
-Luminatick supports a dual-mode real-time architecture, configurable globally by admins via the `REALTIME_TRANSPORT` setting on the `/settings/general` page:
-*   **Polling Mode (Free Tier Friendly):** Aggressive HTTP polling with `document.visibilityState` optimization. Tab active: 30s/60s updates. Tab inactive: Backs off. Protects the Cloudflare 100k daily free tier quota.
-*   **WebSocket Mode (Paid Tier):** Utilizes Cloudflare Durable Objects to maintain persistent WebSocket connections. Delivers instant, ultra low-latency presence tracking and ticket updates. Recommended for larger teams with a paid Cloudflare Workers plan.
+### E. Real-Time Presence & Collaboration
+Luminatick exclusively uses a highly optimized WebSocket architecture to deliver real-time collision detection and agent presence:
+*   **WebSocket Attachments:** Real-time presence is handled via Hibernatable WebSockets in a Durable Object (`NotificationDO`). By using `ws.serializeAttachment()` for session state, we achieve zero DB reads/writes and eliminate the need for keep-alive pings.
+*   **Free-Tier Optimization:** This architecture protects the Cloudflare daily free tier limits by sleeping the DO between events and storing state completely in-memory attached to the sockets, while still maintaining ultra-low latency.
 
 ### F. Group-Based Accessibility & Q&A RAG
 *   Tickets are public until assigned to a Group.
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS knowledge_docs (
 *   **Phase 1.3:** Admin Dashboard (MFA, Ticket list, Group filters) (Completed).
 *   **Phase 1.4:** External Ticket API (v1 Public REST) & API Key Management (Completed).
 *   **Phase 1.5:** Automation Engine (Event-based Webhooks & Scheduled Retention) (Completed).
-*   **Phase 1.6:** Real-time Notifications & Presence (Dual-Mode HTTP Polling & WebSockets) (Completed).
+*   **Phase 1.6:** Real-time Notifications & Presence (WebSocket Attachments via Durable Objects) (Completed).
 *   **Phase 1.7:** Knowledge Base (RAG) & Ticket Q&A Vectorization (Completed).
 *   **Phase 1.8:** Web Widget Plugins (Ticket Form & AI Chat) (Completed).
 *   **Phase 2.1:** Deployment Automation (Automated setup, secrets management, and unified deployment - Completed).

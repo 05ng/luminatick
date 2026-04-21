@@ -838,43 +838,7 @@ dashboard.delete(
 );
 
 
-/**
- * POST /api/presence
- * Update agent presence location via HTTP polling
- */
-dashboard.post("/presence", async (c) => {
-  const { location } = await c.req.json().catch(() => ({ location: null }));
-  const agent = c.get("jwtPayload") as JWTPayload;
 
-  if (!agent) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const userId = agent.sub;
-  const name = agent.full_name || agent.email.split('@')[0];
-
-  if (location) {
-    await c.env.DB.prepare(
-      "INSERT INTO agent_presence (user_id, name, location, last_seen) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(user_id) DO UPDATE SET location=excluded.location, last_seen=CURRENT_TIMESTAMP"
-    )
-      .bind(userId, name, location)
-      .run();
-  } else {
-    await c.env.DB.prepare("DELETE FROM agent_presence WHERE user_id = ?").bind(userId).run();
-  }
-
-  // Cleanup old presence (older than 2 minutes)
-  await c.env.DB.prepare("DELETE FROM agent_presence WHERE last_seen < datetime('now', '-2 minute')").run();
-
-  // Fetch active users in this location
-  const { results } = await c.env.DB.prepare(
-    "SELECT user_id as userId, name, location FROM agent_presence WHERE location = ?"
-  )
-    .bind(location || '')
-    .all();
-
-  return c.json(results);
-});
 
 
 

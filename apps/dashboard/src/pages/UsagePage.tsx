@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardApi, ApiError } from '../api/client';
-import { CreditCard, Database, HardDrive, Cpu, Activity, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { CreditCard, Database, HardDrive, Cpu, Activity, AlertCircle, ExternalLink, RefreshCw, Zap } from 'lucide-react';
+import { UsageStats } from '@luminatick/shared';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -8,18 +9,17 @@ function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
 }
 
-interface UsageData {
-  d1_reads: number;
-  r2_storage_gb: number;
-  worker_requests: number;
-  ai_neurons: number;
-}
+
 
 const LIMITS = {
-  d1_reads: 5_000_000, // 5M per month
-  r2_storage_gb: 10, // 10 GB per month
+  d1_reads_writes: 5_000_000, // 5M per day
+  r2_class_a: 1_000_000, // 1M per month
+  r2_class_b: 10_000_000, // 10M per month
   worker_requests: 100_000, // 100k per day
   ai_neurons: 10_000, // 10k per day
+  do_requests: 100_000, // 100k per day
+  vectorize_queries: 30_000_000, // 30M per month
+  vectorize_writes: 5_000_000, // 5M per month
 };
 
 function formatNumber(num: number) {
@@ -29,7 +29,7 @@ function formatNumber(num: number) {
 }
 
 export function UsagePage() {
-  const [data, setData] = useState<UsageData | null>(null);
+  const [data, setData] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
@@ -47,7 +47,7 @@ export function UsagePage() {
       setIsAuthError(false);
       setIsMasterKeyMissing(false);
       
-      const response = await dashboardApi.get<UsageData>('/settings/usage');
+      const response = await dashboardApi.get<UsageStats>('/settings/usage');
       setData(response);
       setShowCredentialsForm(false);
     } catch (err: any) {
@@ -86,6 +86,7 @@ export function UsagePage() {
       setIsMasterKeyMissing(false);
       await dashboardApi.put('/settings', payload);
       await fetchUsage();
+      setApiToken(''); // Clear sensitive token from state
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to save credentials';
       if (errorMessage.includes('APP_MASTER_KEY is missing')) {
@@ -284,12 +285,12 @@ export function UsagePage() {
       {!isAuthError && !showCredentialsForm && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <StatCard 
-            title="D1 Row Reads"
-            description="Database queries and lookups"
+            title="D1 Reads and Writes"
+            description="Database row operations"
             icon={Database}
-            current={data?.d1_reads || 0}
-            limit={LIMITS.d1_reads}
-            unit="/ month"
+            current={(data?.d1?.rowsRead || 0) + (data?.d1?.rowsWritten || 0)}
+            limit={LIMITS.d1_reads_writes}
+            unit="/ day"
             format={formatNumber}
             colorClass="text-blue-600"
             bgClass="bg-blue-50"
@@ -297,12 +298,26 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="R2 Storage"
-            description="Attachments, images, and files"
+            title="R2 Operations (Class A)"
+            description="Writes to storage"
             icon={HardDrive}
-            current={data?.r2_storage_gb || 0}
-            limit={LIMITS.r2_storage_gb}
-            unit="GB / month"
+            current={data?.r2?.classAOperations || 0}
+            limit={LIMITS.r2_class_a}
+            unit="/ month"
+            format={formatNumber}
+            colorClass="text-indigo-600"
+            bgClass="bg-indigo-50"
+            fillClass="bg-indigo-500"
+          />
+
+          <StatCard 
+            title="R2 Operations (Class B)"
+            description="Reads from storage"
+            icon={HardDrive}
+            current={data?.r2?.classBOperations || 0}
+            limit={LIMITS.r2_class_b}
+            unit="/ month"
+            format={formatNumber}
             colorClass="text-purple-600"
             bgClass="bg-purple-50"
             fillClass="bg-purple-500"
@@ -312,7 +327,7 @@ export function UsagePage() {
             title="Workers Requests"
             description="API calls, widget loads, pages"
             icon={Activity}
-            current={data?.worker_requests || 0}
+            current={data?.workers?.requests || 0}
             limit={LIMITS.worker_requests}
             unit="/ day"
             format={formatNumber}
@@ -325,13 +340,52 @@ export function UsagePage() {
             title="Workers AI Neurons"
             description="RAG, embedding, auto-responses"
             icon={Cpu}
-            current={data?.ai_neurons || 0}
+            current={data?.workersAi?.neurons || 0}
             limit={LIMITS.ai_neurons}
             unit="/ day"
             format={formatNumber}
             colorClass="text-brand-600"
             bgClass="bg-brand-50"
             fillClass="bg-brand-500"
+          />
+
+          <StatCard 
+            title="Durable Objects Requests"
+            description="Real-time presence connections"
+            icon={Zap}
+            current={data?.durableObjects?.requests || 0}
+            limit={LIMITS.do_requests}
+            unit="/ day"
+            format={formatNumber}
+            colorClass="text-amber-600"
+            bgClass="bg-amber-50"
+            fillClass="bg-amber-500"
+          />
+
+          <StatCard 
+            title="Vectorize Queries"
+            description="Vector search queries"
+            icon={Database}
+            current={data?.vectorize?.queried || 0}
+            limit={LIMITS.vectorize_queries}
+            unit="/ month"
+            format={formatNumber}
+            colorClass="text-pink-600"
+            bgClass="bg-pink-50"
+            fillClass="bg-pink-500"
+          />
+
+          <StatCard 
+            title="Vectorize Writes"
+            description="Vector index updates"
+            icon={Database}
+            current={data?.vectorize?.written || 0}
+            limit={LIMITS.vectorize_writes}
+            unit="/ month"
+            format={formatNumber}
+            colorClass="text-rose-600"
+            bgClass="bg-rose-50"
+            fillClass="bg-rose-500"
           />
         </div>
       )}

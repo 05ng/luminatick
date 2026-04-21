@@ -30,16 +30,25 @@ app.get('/api/realtime', async (c) => {
   const token = c.req.query('token');
   if (!token) return c.json({ error: 'Unauthorized' }, 401);
 
+  let user = null;
   try {
     const authService = new AuthService(c.env, c.executionCtx);
-    await authService.verifyToken(token); // Verify auth before passing to DO
+    user = await authService.verifyToken(token); // Verify auth before passing to DO
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
   } catch (err) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  const id = c.env.NOTIFICATION_DO.idFromName('global_notifications');
+  // Construct a new Request and inject trusted headers
+  const newReq = new Request(c.req.raw.url, c.req.raw);
+  newReq.headers.set('X-User-ID', user.id);
+  newReq.headers.set('X-User-Name', user.name || user.email);
+
+  const id = c.env.NOTIFICATION_DO.idFromName('global');
   const obj = c.env.NOTIFICATION_DO.get(id);
-  return obj.fetch(c.req.raw);
+  return obj.fetch(newReq);
 });
 
 // Enable CORS for the dashboard, portal, and widget
@@ -66,38 +75,8 @@ app.use('/api/*', cors({
 // Health check
 app.get('/health', (c) => c.text('OK'));
 
-// Test endpoint for simulating inbound emails (developer shortcut)
-app.post('/api/test/email', async (c) => {
-  const rawBody = await c.req.text();
-  const from = c.req.header('X-From') || 'customer@example.com';
-  const to = c.req.header('X-To') || 'support@luminatick.com';
-  const subject = c.req.header('X-Subject') || 'Test Ticket';
+// Test endpoint for simulating inbound emails removed for security reasons in production.
 
-  console.log(`[Dev Shortcut] Simulating inbound email from ${from} to ${to}`);
-  
-  const inboundService = new InboundEmailService(c.env, c.executionCtx);
-  
-  // Create a stream from the raw string for the service to consume
-  const stream = new ReadableStream({
-    start(controller) {
-      controller.enqueue(new TextEncoder().encode(rawBody));
-      controller.close();
-    }
-  });
-
-  try {
-    await inboundService.handle({
-      from,
-      to,
-      subject,
-      raw: stream as any,
-    });
-    return c.json({ success: true, message: 'Simulated email processed successfully' });
-  } catch (error: any) {
-    console.error('[Dev Shortcut Error]', error);
-    return c.json({ success: false, error: error.message }, 500);
-  }
-});
 
 // API Routes
 app.route('/api/auth', auth);

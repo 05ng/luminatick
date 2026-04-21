@@ -8,13 +8,13 @@ Luminatick is deeply inspired by Zammad and Cloudflare's serverless ecosystem. A
 ## Design Philosophy
 Luminatick was architected with four core principles in mind:
 
-1. **Zero-Cost Out of the Box:** The system is purposefully designed to run comfortably within the **Cloudflare Free Tier**. By leveraging efficient data storage patterns (like hybrid R2 offloading) and intelligent HTTP polling, individuals and small teams can operate a fully-featured AI ticketing system without incurring monthly infrastructure costs.
-2. **Progressive Enhancement:** As your organization grows, Luminatick scales with you. For users on paid Cloudflare plans, the system seamlessly unlocks advanced capabilities—such as utilizing **Durable Objects and WebSockets** for ultra low-latency, real-time agent presence, and live dashboard updates.
+1. **Zero-Cost Out of the Box:** The system is purposefully designed to run comfortably within the **Cloudflare Free Tier**. By leveraging efficient data storage patterns (like hybrid R2 offloading) and efficient API design, individuals and small teams can operate a fully-featured AI ticketing system without incurring monthly infrastructure costs.
+2. **High-Performance Real-time Presence:** Uses Cloudflare Durable Objects backed by SQLite to provide seamless, low-latency WebSocket communication for agent presence and ticket updates.
 3. **Frictionless Deployment:** The barrier to entry is kept to a minimum. Luminatick provides a streamlined deployment process requiring only a Cloudflare account. With built-in Wrangler commands, you can provision the entire infrastructure—database, object storage, vector search, AI models, and edge compute—in just a few minutes.
 4. **Privacy First:** Built with user privacy in mind from day one. The system requests minimal personal information from customers and features built-in GDPR-compliant automation, including scheduled tasks to automatically delete inactive users and purge old ticket data.
 
 ## Core Technologies
-- **Backend:** Cloudflare Workers (API), Dual-Mode Presence (HTTP Polling / WebSockets), Cloudflare Email Workers (Inbound).
+- **Backend:** Cloudflare Workers (API), Real-time Presence (WebSockets via SQLite Durable Objects), Cloudflare Email Workers (Inbound).
 - **Frontend:** React + Vite + Tailwind CSS (Admin Dashboard, Customer Portal), Shadow DOM encapsulated React (Widget).
 - **Database/Storage:** Cloudflare D1 (SQLite for metadata), Cloudflare R2 (Hybrid Offloading for ticket payloads and attachments), Cloudflare Vectorize (RAG).
 - **AI:** Cloudflare Workers AI (Llama 3 / DeepSeek, BGE-large embeddings).
@@ -135,7 +135,7 @@ For a detailed guide, see [docs/deployment.md](docs/deployment.md).
 - **Widget Integrity:** Use Shadow DOM in the widget to prevent CSS conflicts with host websites.
 
 ## Support
-For any inquiries or assistance, please reach out to us at [help@luminatick.com](mailto:help@luminatick.com).
+For any inquiries or assistance, please reach out to us at [help@luminatick.org](mailto:help@luminatick.org).
 
 ## License
 MIT

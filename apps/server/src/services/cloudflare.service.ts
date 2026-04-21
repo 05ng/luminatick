@@ -45,14 +45,17 @@ export class CloudflareService {
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const start = startOfMonth.toISOString();
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    const startOfMonthStr = startOfMonth.toISOString();
+    const startOfDayStr = startOfDay.toISOString();
     const end = now.toISOString();
 
     const query = `
-      query getUsage($accountId: string, $start: string, $end: string) {
+      query getUsage($accountId: string, $startOfMonth: string, $startOfDay: string, $end: string) {
         viewer {
           accounts(filter: { accountTag: $accountId }) {
-            d1AnalyticsAdaptiveGroups(limit: 10000, filter: { datetime_geq: $start, datetime_leq: $end }) {
+            d1AnalyticsAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfDay, datetime_leq: $end }) {
               sum {
                 readQueries
                 writeQueries
@@ -60,7 +63,7 @@ export class CloudflareService {
                 rowsWritten
               }
             }
-            r2OperationsAdaptiveGroups(limit: 10000, filter: { datetime_geq: $start, datetime_leq: $end }) {
+            r2OperationsAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfMonth, datetime_leq: $end }) {
               dimensions {
                 actionType
               }
@@ -68,15 +71,35 @@ export class CloudflareService {
                 requests
               }
             }
-            aiInferenceAdaptiveGroups(limit: 10000, filter: { datetime_geq: $start, datetime_leq: $end }) {
+            durableObjectsInvocationsAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfDay, datetime_leq: $end }) {
+              sum {
+                requests
+              }
+            }
+            durableObjectsPeriodicGroups(limit: 10000, filter: { datetime_geq: $startOfDay, datetime_leq: $end }) {
+              max {
+                activeWebsocketConnections
+              }
+            }
+            aiInferenceAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfDay, datetime_leq: $end }) {
               sum {
                 totalNeurons
               }
             }
-            workersInvocationsAdaptive(limit: 10000, filter: { datetime_geq: $start, datetime_leq: $end }) {
+            workersInvocationsAdaptive(limit: 10000, filter: { datetime_geq: $startOfDay, datetime_leq: $end }) {
               sum {
                 requests
                 cpuTimeUs
+              }
+            }
+            vectorizeV2QueriesAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfMonth, datetime_leq: $end }) {
+              sum {
+                servedVectorCount
+              }
+            }
+            vectorizeV2WritesAdaptiveGroups(limit: 10000, filter: { datetime_geq: $startOfMonth, datetime_leq: $end }) {
+              sum {
+                addedVectorCount
               }
             }
           }
@@ -94,7 +117,8 @@ export class CloudflareService {
         query,
         variables: {
           accountId: accountId,
-          start,
+          startOfMonth: startOfMonthStr,
+          startOfDay: startOfDayStr,
           end,
         },
       }),
@@ -147,6 +171,27 @@ export class CloudflareService {
       cpuTime: acc.cpuTime + (g.sum?.cpuTimeUs || 0)
     }), { requests: 0, cpuTime: 0 });
 
+    const doInvocations = account.durableObjectsInvocationsAdaptiveGroups || [];
+    const doInvocationsSum = doInvocations.reduce((acc: any, g: any) => ({
+      requests: acc.requests + (g.sum?.requests || 0),
+      cpuTime: acc.cpuTime + (g.sum?.cpuTime || 0)
+    }), { requests: 0, cpuTime: 0 });
+
+    const doPeriodic = account.durableObjectsPeriodicGroups || [];
+    const doPeriodicSum = doPeriodic.reduce((acc: any, g: any) => ({
+      activeConnections: Math.max(acc.activeConnections, g.max?.activeWebsocketConnections || 0)
+    }), { activeConnections: 0 });
+
+    const vectorizeQueries = account.vectorizeV2QueriesAdaptiveGroups || [];
+    const vectorizeQueriesSum = vectorizeQueries.reduce((acc: any, g: any) => ({
+      queried: acc.queried + (g.sum?.servedVectorCount || 0)
+    }), { queried: 0 });
+
+    const vectorizeWrites = account.vectorizeV2WritesAdaptiveGroups || [];
+    const vectorizeWritesSum = vectorizeWrites.reduce((acc: any, g: any) => ({
+      written: acc.written + (g.sum?.addedVectorCount || 0)
+    }), { written: 0 });
+
     return {
       d1: {
         readQueries: d1Sum.readQueries || 0,
@@ -165,8 +210,19 @@ export class CloudflareService {
         requests: workersSum.requests || 0,
         cpuTime: workersSum.cpuTime || 0,
       },
+      durableObjects: {
+        requests: doInvocationsSum.requests || 0,
+        cpuTime: doInvocationsSum.cpuTime || 0,
+        activeConnections: doPeriodicSum.activeConnections || 0,
+        inboundWebsocketMsg: 0,
+        outboundWebsocketMsg: 0,
+      },
+      vectorize: {
+        queried: vectorizeQueriesSum.queried || 0,
+        written: vectorizeWritesSum.written || 0,
+      },
       period: {
-        start,
+        start: startOfMonthStr,
         end,
       },
     };

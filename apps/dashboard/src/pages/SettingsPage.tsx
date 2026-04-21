@@ -12,7 +12,6 @@ export const SettingsPage: React.FC = () => {
     PORTAL_URL: '',
     SYSTEM_TIMEZONE: 'UTC',
     TICKET_PREFIX: 'TKT',
-    REALTIME_TRANSPORT: 'polling',
     DEFAULT_EMAIL_SIGNATURE: '',
     CLOUDFLARE_ACCOUNT_ID: '',
     CLOUDFLARE_API_TOKEN: '',
@@ -215,24 +214,7 @@ export const SettingsPage: React.FC = () => {
                 <option value="Australia/Sydney">Sydney (AEST)</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="REALTIME_TRANSPORT" className="block text-sm font-medium text-slate-700 mb-1">
-                Real-time Transport
-              </label>
-              <select
-                id="REALTIME_TRANSPORT"
-                name="REALTIME_TRANSPORT"
-                value={formData.REALTIME_TRANSPORT}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-              >
-                <option value="polling">Polling (Free Tier Friendly)</option>
-                <option value="websocket">WebSockets (Requires Durable Objects)</option>
-              </select>
-              <p className="mt-1 text-sm text-slate-500">
-                Choose the transport method for real-time dashboard updates. Polling is visibility-based and uses less resources. WebSockets provide instant updates but require paid Cloudflare Workers tier.
-              </p>
-            </div>
+
             <div>
               <label htmlFor="TICKET_PREFIX" className="block text-sm font-medium text-slate-700 mb-1">
                 Ticket Prefix

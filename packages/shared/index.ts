@@ -201,6 +201,17 @@ export interface UsageStats {
     requests: number;
     cpuTime: number;
   };
+  durableObjects?: {
+    requests: number;
+    cpuTime: number;
+    activeConnections: number;
+    inboundWebsocketMsg: number;
+    outboundWebsocketMsg: number;
+  };
+  vectorize?: {
+    queried: number;
+    written: number;
+  };
   period: {
     start: string;
     end: string;

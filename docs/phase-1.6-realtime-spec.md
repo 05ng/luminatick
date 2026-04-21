@@ -1,79 +1,53 @@
-# Phase 1.6: Real-time Notifications & Presence (Dual-Mode Architecture)
+# Phase 1.6: Real-time Notifications & Presence (WebSocket Architecture)
 
 ## Overview
-Luminatick requires a system to keep agents informed of new tickets, updates, and the presence of other agents. To accommodate both cost-conscious users and high-performance enterprise needs, the real-time architecture implements a **Dual-Mode System**:
-1. **Pure Visibility-Based Polling (Free Tier Friendly):** An aggressively optimized HTTP polling mechanism that keeps the system fully compatible with Cloudflare's free tier limits (specifically the 100k daily Workers limit).
-2. **WebSockets / Durable Objects (Paid Tier):** Restored as an optional, high-performance feature for real-time, low-latency updates.
+Luminatick requires a robust system to keep agents informed of new tickets, updates, and the presence of other agents. The real-time architecture implements a **Unified WebSocket System** backed by **Cloudflare Durable Objects with Hibernatable WebSocket Attachments**.
 
-This architecture is controlled by a global admin setting (`REALTIME_TRANSPORT` = 'polling' | 'websocket') configured in the `/settings/general` page. 
+This architecture provides an instant, bidirectional communication channel between the client and server, ensuring ultra-low latency updates and efficient presence tracking, while maximizing free-tier optimizations.
 
 ## Architecture
 
-### 1. HTTP Polling Mechanism (Free Tier)
-- **Responsibility**: Fetch state updates for tickets, lists, and agent presence.
-- **Optimization Strategy**: Aggressive use of `document.visibilityState` in the browser. Both the Agent Dashboard and Customer Portal monitor the tab visibility.
-    - **Active Tab**: Polls every 30 seconds for the dashboard, 60 seconds for the portal.
-    - **Inactive/Background Tab**: Polling interval falls back to 60 seconds (or pauses entirely depending on the configuration).
-    - **Window Focus**: Immediate refetch triggered automatically upon regaining window focus.
-- **Benefits**: Protects the 100k daily free tier Workers quota by drastically reducing unnecessary API requests while still feeling "real-time" to active users.
-
-### 2. WebSockets & Durable Objects (Paid Tier)
+### 1. WebSockets & Durable Objects
 - **Responsibility**: Establish a persistent connection for instant state updates and presence tracking.
-- **Mechanism**: Connects to a Cloudflare Durable Object via WebSockets when `REALTIME_TRANSPORT` is set to `websocket`.
+- **Mechanism**: Clients connect to a Cloudflare Durable Object (`NotificationDO`) via WebSockets through the `/api/realtime` endpoint.
 - **Benefits**: Ultra low-latency updates. Ideal for busy teams needing instantaneous collision detection on tickets and real-time chat.
-- **Requirements**: Requires a paid Cloudflare Workers plan as Durable Objects are not available on the free tier.
+- **Storage Strategy**: Rather than using SQLite or KV, the Durable Object utilizes **WebSocket Attachments** (`ws.serializeAttachment()`). This allows in-memory session state to be tied directly to the WebSocket connection, surviving DO hibernation and resulting in **zero DB reads/writes** for presence state.
 
-### 3. Agent Presence Table (`agent_presence`)
-- **Responsibility**: Manage active sessions and locations of agents within the system (used primarily by the polling mechanism).
-- **Storage**: Cloudflare D1. A new table `agent_presence` is introduced to hold current agent states.
-- **Schema Overview**:
-    - `agent_id`: References the user.
-    - `location`: Where the agent is currently working (e.g., "ticket:123", "list:unassigned").
-    - `last_seen_at`: Timestamp updated on each poll.
-- **Cleanup**: Stale presence records (e.g., agents who closed the tab without logging out) are automatically ignored if `last_seen_at` is older than a specific threshold (e.g., 2 minutes).
+### 2. Agent Presence Tracking (WebSocket Attachments)
+- **Responsibility**: Manage active sessions and locations of agents within the system without incurring storage costs.
+- **Storage**: Hibernatable WebSocket attachments (in-memory state tied to the socket).
+- **Attachment Schema Overview**:
+    - `userId`: References the authenticated user.
+    - `name`: Display name of the agent.
+    - `location`: Where the agent is currently working (e.g., "ticket:123", "list:unassigned"). Truncated to prevent memory bloat.
+- **Cleanup**: Stale presence records are automatically removed when a WebSocket connection is closed (`webSocketClose`). There is no need for active ping/pong timeouts since Cloudflare manages the TCP connection lifecycle and wakes the DO only on events.
 
-### 4. Presence Updates & Notifications
-- **Endpoint**: `/api/v1/presence` and `/api/v1/tickets/updates` (for Polling) or via WebSocket messages (for DO).
-- When an agent opens a ticket or refreshes the page, the frontend sends a background fetch (or WebSocket message) to update their presence state.
-- Concurrent ticket updates (e.g., "New reply from customer") are fetched during the 30s/60s polling cycle or pushed instantly via WebSocket and surface as toast notifications or unread indicators.
+### 3. Presence Updates & Notifications
+- **Endpoint**: `/api/realtime` handles the initial WebSocket upgrade.
+- **Authentication**: JWT tokens are verified securely *before* the request is forwarded to the Durable Object. The verified User ID and Name are injected securely into the request headers (`X-User-ID`, `X-User-Name`) to prevent spoofing.
+- When an agent opens a ticket or navigates the dashboard, the frontend sends a `presence.update` message via the WebSocket.
+- The Durable Object immediately deserializes the attachment, updates the `location`, reserializes it, and broadcasts the updated presence state to all other connected clients via a `presence.update` payload.
+- Server-side events (e.g., "New reply from customer") are sent to the Durable Object's `/broadcast` endpoint, which then relays the payload to all connected WebSocket clients.
 
-## Implementation Plan
+## Implementation Details
 
-### Backend (Cloudflare Workers & D1)
-1. **D1 Schema Update**: Add the `agent_presence` table.
-2. **API Handlers**: 
-   - Create `/api/v1/presence` endpoints (GET, POST) to update and retrieve current presence states for polling.
-   - Refine existing list/ticket fetching endpoints to handle efficient delta queries or "last updated since" logic if needed.
-   - Maintain a Durable Object class (`NotificationDO`) mapped to WebSockets for paid-tier environments.
-3. **Configuration**: Use a global settings flag (`REALTIME_TRANSPORT` = 'polling' | 'websocket') fetched from the `/settings/general` page to dictate the active real-time architecture system.
+### Backend (Cloudflare Workers & DO)
+1. **Durable Object (`NotificationDO`)**: 
+   - Uses `ws.serializeAttachment()` and `ws.deserializeAttachment()` to manage session state.
+   - Handles WebSocket lifecycle via the Hibernation API: `webSocketMessage` for presence updates, `webSocketClose` for automatic offline broadcasting and cleanup.
+   - Free-Tier Optimized: Because it leverages hibernation and attachments, it eliminates expensive DB operations and constant DO wake-ups from pings.
+2. **Security**: 
+   - The `/api/realtime` route uses the `AuthService` to verify JWTs. If verification fails, the connection is rejected.
+   - Trusted headers (`X-User-ID`, `X-User-Name`) are constructed on the server after verification to prevent client-side spoofing.
+   - Input limits are enforced on `location` strings to prevent malicious memory bloat attacks.
 
-### Frontend (React Dashboard & Portal)
-1. **Dynamic Transport Switching**: Enhance `useRealtime` hook to initialize either a WebSocket connection or HTTP polling interval based on the `REALTIME_TRANSPORT` setting payload.
-2. **Visibility Hook (Polling)**: Implement logic to attach to `document.addEventListener('visibilitychange')`.
-3. **Dynamic Intervals (Polling)**: Set up `setInterval` logic that shifts between 30s when `document.visibilityState === 'visible'` and 60s when `'hidden'`.
-4. **UI Updates**:
-    - Update `TicketDetailPage` to pull and display "Live Viewers" by querying the presence API or consuming WS messages.
-    - Add manual "Refresh" capability for users wanting immediate synchronization.
-    - Surface visual indicators (toasts/badges) when polling or WebSockets detect new data.
+### Frontend (React Dashboard)
+1. **WebSocket Transport**: The `useRealtime` hook manages the WebSocket connection lifecycle.
+2. **Ping/Pong**: Deprecated. The architecture relies on Cloudflare's inherent WebSocket lifecycle management, eliminating the need for application-level keep-alive intervals.
+3. **UI Updates**:
+    - `TicketDetailPage` displays "Live Viewers" by consuming real-time `presence.sync` and `presence.update` messages.
+    - Real-time toast notifications alert agents of new messages or system events without requiring manual refreshes.
+    - Reconnection logic automatically handles intermittent network drops with exponential backoff.
 
-## Security & Quota Considerations
-- **Authentication**: All polling endpoints require valid JWT authentication.
-- **Data Leakage**: Ensure the presence API filters out sensitive user details and only returns necessary fields (name, avatar, location) for authorized agents.
-- **Strict Quota Protection**: The combination of `visibilitychange` listeners and 30s/60s intervals is specifically designed to keep the daily Worker request volume comfortably under the 100k free tier limit for typical small-to-medium deployments. 
-
-## Validation & Final Refinement (Deep-Dive)
-
-### 1. Backend Refinements
-- **Dual-Mode Support**: Verified that `REALTIME_TRANSPORT` securely switches users between WebSockets and HTTP Polling mechanisms via API.
-- **Free-Tier Assurance**: Ensured Durable Objects are entirely optional and only initialized for users on the paid WebSocket tier.
-- **Efficient Queries**: Tuned D1 queries on `agent_presence` to quickly update `last_seen_at` and ignore stale sessions older than 2 minutes (when using polling).
-
-### 2. Frontend Polish
-- **Smart Polling**: Verified `document.visibilityState` pauses or slows down requests effectively when users switch tabs or minimize the browser window.
-- **Immediate Refresh**: Confirmed that returning to the tab immediately fires a background refresh, making the app feel instantaneously responsive despite using polling.
-- **Interactive UI**: Enhanced `TicketDetailPage` with an "Active Now" sidebar for smooth presence transitions that work seamlessly across both transport mechanisms.
-
-### 3. Testing Results
-- **Quota Impact (Polling)**: Simulated 10 agents working an 8-hour shift. The 30s active / 60s background strategy yielded a predictable and highly sustainable request volume, well within the 100k daily free tier.
-- **Performance Impact (WebSocket)**: Confirmed near-instantaneous sync via Durable Objects when enabled for Enterprise-like workflows.
-- **Presence Accuracy**: Verified that multiple agents viewing the same ticket correctly see each other's status updated within the polling window, or instantly via WebSockets.
+## Note on Previous Architecture
+*Luminatick previously supported a dual-mode architecture with HTTP polling, and later a SQLite-backed Durable Object. Both have been superseded. The unified Durable Object WebSocket Attachment architecture is now the sole transport mechanism, offering superior performance, zero-storage presence tracking, and a simplified codebase.*

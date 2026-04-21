@@ -46,6 +46,10 @@ export class AuthService {
       const { payload } = await jose.jwtVerify(token, secretKey);
       
       const jwtPayload = payload as unknown as JWTPayload;
+
+      if (jwtPayload.mfa_verified === false) {
+        return null;
+      }
       
       // Fetch user from DB to ensure they still exist and have the correct role
       const user = await this.env.DB.prepare(
