@@ -429,7 +429,7 @@ describe("Customer Handler Integration Tests", () => {
           method: "POST",
           body: JSON.stringify({ 
             message: "Another reply",
-            attachments: [{ filename: "test.png", size: 123, contentType: "image/png", key: "s3-key" }]
+            attachments: [{ filename: "test.png", size: 123, contentType: "image/png", key: "customer-attachments/user-1/s3-key.png" }]
           }),
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, "CF-Connecting-IP": `127.0.0.${Math.floor(Math.random() * 255)}` },
         },
@@ -451,7 +451,7 @@ describe("Customer Handler Integration Tests", () => {
         file_name: "test.png",
         file_size: 123,
         content_type: "image/png",
-        r2_key: "s3-key"
+        r2_key: "customer-attachments/user-1/s3-key.png"
       });
     });
 

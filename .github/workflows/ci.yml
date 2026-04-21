@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type Check (Server)
+        run: npm run typecheck --workspace=apps/server
+
+      - name: Build Dashboard
+        run: npm run build --workspace=apps/dashboard
+
+      - name: Build Portal
+        run: npm run build --workspace=apps/portal
+
+      - name: Build Widget
+        run: npm run build --workspace=apps/widget
+
+      - name: Run Tests
+        run: npm run test --workspaces --if-present
