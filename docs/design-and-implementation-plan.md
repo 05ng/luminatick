@@ -50,9 +50,10 @@ Luminatick exclusively uses a highly optimized WebSocket architecture to deliver
 *   **WebSocket Attachments:** Real-time presence is handled via Hibernatable WebSockets in a Durable Object (`NotificationDO`). By using `ws.serializeAttachment()` for session state, we achieve zero DB reads/writes and eliminate the need for keep-alive pings.
 *   **Free-Tier Optimization:** This architecture protects the Cloudflare daily free tier limits by sleeping the DO between events and storing state completely in-memory attached to the sockets, while still maintaining ultra-low latency.
 
-### F. Group-Based Accessibility & Q&A RAG
-*   Tickets are public until assigned to a Group.
-*   Agents mark Q&A pairs to seed the AI Vectorize database.
+### F. Group-Based Accessibility & AI Vectorization (Workflows)
+*   **Access:** Tickets are public until assigned to a Group.
+*   **Asynchronous Processing:** To prevent UI latency during knowledge base article creation or when agents mark Q&A pairs, Luminatick utilizes Cloudflare Workflows.
+*   **Zero-Latency Saves:** Content is instantly saved to D1/R2, and a background Workflow is triggered to handle the computationally heavy tasks of text chunking and AI embedding generation (BGE-large) for the Vectorize database.
 
 ### G. Customizable Ticket Attributes
 Admins can define custom fields for tickets using a schema builder. Ticket data for these custom attributes is stored flexibly as JSON in a `custom_fields` column on the tickets table. This allows for dynamic data collection without needing to alter the core database schema for every new field. **UI/UX Note:** To simplify ticket creation, custom attributes are omitted from the initial creation form. They are displayed and editable exclusively in the right-hand sidebar of the Ticket Detail page.

@@ -125,7 +125,7 @@ export const KnowledgeEditorPage: React.FC = () => {
           ) : (
             <Save size={16} className="mr-2" />
           )}
-          {isSaving ? 'Saving...' : 'Save Article'}
+          {isSaving ? 'Processing...' : 'Save Article'}
         </button>
       </div>
 

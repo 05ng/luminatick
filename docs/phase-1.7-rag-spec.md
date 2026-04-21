@@ -13,15 +13,18 @@ Implement a Retrieval-Augmented Generation (RAG) system to assist agents by prov
 - **Cloudflare R2**: Stores raw knowledge base documents (.pdf, .md, .docx).
 - **Cloudflare D1**: Stores metadata for knowledge documents and ticket articles.
 
-### 2.2. Data Flow
+### 2.2. Data Flow (Asynchronous Vectorization)
+To guarantee zero-latency responses in the UI when creating articles or marking Q&A pairs, heavy vectorization tasks are offloaded to Cloudflare Workflows.
+
 1. **Ingestion (Knowledge Base)**:
-    - User uploads document via Dashboard.
-    - Document stored in R2.
-    - Text extracted and chunked.
-    - Chunks converted to embeddings and stored in Vectorize with metadata (`doc_id`, `chunk_index`).
+    - Admin creates/updates an article via the Dashboard editor.
+    - Article metadata is instantly saved to D1 and full markdown body to R2.
+    - A `VectorizeJob` is dispatched to the background `VectorizeWorkflow` (`action: 'create' | 'update'`).
+    - The Workflow steps execute asynchronously: fetches content, deletes old vectors if updating, chunks text, generates embeddings via Workers AI, inserts into Vectorize, and finally updates the D1 status to `active`.
 2. **Ingestion (Ticket Q&A)**:
     - Agent marks an article as "Q&A" (Question or Answer).
-    - Article text converted to embedding and stored in Vectorize with metadata (`ticket_id`, `article_id`, `type: 'qa'`).
+    - D1 is instantly updated, and a `VectorizeJob` is dispatched (`action: 'qa_mark'`).
+    - The Workflow asynchronously retrieves the article body, chunks it, generates embeddings, and stores them in Vectorize. Unmarking purges these vectors using the same Workflow.
 3. **Retrieval & Generation (Auto-Draft)**:
     - New ticket or agent reply initiates a search.
     - Input text converted to embedding.
@@ -39,10 +42,14 @@ Implement a Retrieval-Augmented Generation (RAG) system to assist agents by prov
     - `type`: `document` or `qa`.
     - `text`: (Optional, if small) or reference to D1/R2.
 
-### 3.2. Services
+### 3.2. Services & Workflows
 - `VectorService`: Wraps Vectorize API for upsert/query.
-- `KnowledgeService`: Handles document parsing and lifecycle.
+- `KnowledgeService`: Handles document parsing, chunking, and lifecycle.
 - `AiService`: Wraps Workers AI for embeddings and generation.
+- `VectorizeWorkflow`: A Cloudflare `WorkflowEntrypoint` class that orchestrates the multi-step background process for vector generation. It ensures robust retries and step isolation using `step.do()`.
+    - **`create` / `update` (Knowledge Base)**: Steps include `fetch_content`, `delete_old_vectors`, `vectorize_content`, and `update_status`.
+    - **`qa_mark` (Ticket Q&A)**: Steps include `fetch_qa_content`, `vectorize_qa`, `update_qa_status`, or `unmark_qa` (for deletion).
+    - If an AI model or Vectorize indexing fails mid-process, the workflow automatically retries without repeating completed steps.
 
 ### 3.3. Database Updates
 - `knowledge_docs` table: Already exists, needs `status` updates (`processing`, `active`, `error`).

@@ -17,50 +17,40 @@ export class KnowledgeService {
       throw new Error('File too large. Maximum size is 10MB.');
     }
 
-    const docId = crypto.randomUUID();
-    const filePath = `knowledge/${docId}/${fileName}`;
+    // Sanitize fileName to prevent directory traversal (e.g., ../../)
+    const safeFileName = fileName.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9.\-_]/g, '_');
 
-    // 1. Upload to R2
+    const docId = crypto.randomUUID();
+    const filePath = `knowledge/${docId}/${safeFileName}`;
+
     await this.env.ATTACHMENTS_BUCKET.put(filePath, content, {
       httpMetadata: { contentType },
     });
 
-    // 2. Insert record into D1
+    const isText = contentType.startsWith('text/') || 
+                  fileName.endsWith('.txt') || 
+                  fileName.endsWith('.md') ||
+                  fileName.endsWith('.csv');
+
+    if (!isText) {
+      await this.env.DB.prepare(
+        'INSERT INTO knowledge_docs (id, title, file_path, status) VALUES (?, ?, ?, ?)'
+      ).bind(docId, title, filePath, 'unsupported_type').run();
+      throw new Error(`Format not supported for direct vectorization: ${contentType}`);
+    }
+
     await this.env.DB.prepare(
       'INSERT INTO knowledge_docs (id, title, file_path, status) VALUES (?, ?, ?, ?)'
-    )
-      .bind(docId, title, filePath, 'processing')
-      .run();
+    ).bind(docId, title, filePath, 'processing').run();
 
-    // 3. Extract text & Vectorize
-    try {
-      // In a production app, use a dedicated microservice or worker for PDF/DOCX
-      // For this implementation, we support text-based files directly.
-      const isText = contentType.startsWith('text/') || 
-                    fileName.endsWith('.txt') || 
-                    fileName.endsWith('.md') ||
-                    fileName.endsWith('.csv');
-
-      if (isText) {
-        const text = new TextDecoder().decode(content);
-        const chunkCount = await this.processAndStoreVectors(docId, text, 'document');
-
-        await this.env.DB.prepare('UPDATE knowledge_docs SET status = ?, chunk_count = ? WHERE id = ?')
-          .bind('active', chunkCount, docId)
-          .run();
-      } else {
-        // Mark as unsupported for binary formats in this MVP
-        await this.env.DB.prepare('UPDATE knowledge_docs SET status = ? WHERE id = ?')
-          .bind('unsupported_type', docId)
-          .run();
-        throw new Error(`Format not supported for direct vectorization: ${contentType}`);
-      }
-    } catch (error: any) {
-      console.error('Vectorization failed:', error);
-      await this.env.DB.prepare('UPDATE knowledge_docs SET status = ? WHERE id = ?')
-        .bind('error', docId)
-        .run();
-      throw error;
+    if (this.env.VECTORIZE_WORKFLOW) {
+      await this.env.VECTORIZE_WORKFLOW.create({
+        id: `create_upload_${docId}`,
+        payload: {
+          action: 'create',
+          documentId: docId
+        }
+      });
     }
 
     return docId;
@@ -71,18 +61,22 @@ export class KnowledgeService {
    * Implements sliding-window overlap to preserve context across chunk boundaries.
    * Avoids D1 FTS usage to preserve Free Tier write operations.
    */
-  private async processAndStoreVectors(sourceId: string, text: string, type: 'document' | 'qa', categoryId?: string | null): Promise<number> {
+  async processAndStoreVectors(sourceId: string, text: string, type: 'document' | 'qa', categoryId?: string | null, title?: string): Promise<number> {
     const chunks = this.chunkText(text);
+
+    // Sanitize title to prevent prompt injection and DoS
+    const safeTitle = title ? title.replace(/[\r\n]+/g, ' ').substring(0, 200).trim() : '';
 
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
+      const chunkText = safeTitle ? `Title: ${safeTitle}\n\n${chunk}` : chunk;
       const vectorId = type === 'qa' ? `qa_${sourceId}_${i}` : `doc_${sourceId}_${i}`;
       
-      const embedding = await this.aiService.generateEmbeddings(chunk);
+      const embedding = await this.aiService.generateEmbeddings(chunkText);
       const metadata: any = {
         source_id: sourceId,
         type: type,
-        text: chunk,
+        text: chunkText,
       };
       if (categoryId) {
         metadata.category_id = categoryId;
@@ -193,18 +187,16 @@ export class KnowledgeService {
       .bind(docId, title, filePath, 'processing', categoryId)
       .run();
 
-    try {
-      const chunkCount = await this.processAndStoreVectors(docId, content, 'document', categoryId);
-
-      await this.env.DB.prepare('UPDATE knowledge_docs SET status = ?, chunk_count = ? WHERE id = ?')
-        .bind('active', chunkCount, docId)
-        .run();
-    } catch (error: any) {
-      console.error('Vectorization failed:', error);
-      await this.env.DB.prepare('UPDATE knowledge_docs SET status = ? WHERE id = ?')
-        .bind('error', docId)
-        .run();
-      throw error;
+    // Trigger workflow
+    if (this.env.VECTORIZE_WORKFLOW) {
+      await this.env.VECTORIZE_WORKFLOW.create({
+        id: `create_doc_${docId}`,
+        payload: {
+          action: 'create',
+          documentId: docId,
+          categoryId: categoryId
+        }
+      });
     }
 
     return docId;
@@ -220,8 +212,6 @@ export class KnowledgeService {
     }
 
     const filePath = doc.file_path;
-
-    // Fetch existing content to compare
     let currentContent = '';
     try {
       const object = await this.env.ATTACHMENTS_BUCKET.get(filePath);
@@ -247,62 +237,16 @@ export class KnowledgeService {
       .bind(title, categoryId, contentChanged ? 'processing' : 'active', id)
       .run();
 
-    if (contentChanged) {
-      try {
-        const vectorIdsToDelete = [];
-        const oldChunkCount = doc.chunk_count || 100; // Fallback to 100 if undefined or 0 to be safe for old docs
-        for (let i = 0; i < oldChunkCount; i++) {
-          vectorIdsToDelete.push(`doc_${id}_${i}`);
+    if ((contentChanged || categoryChanged) && this.env.VECTORIZE_WORKFLOW) {
+      await this.env.VECTORIZE_WORKFLOW.create({
+        id: `update_doc_${id}_${Date.now()}`,
+        payload: {
+          action: 'update',
+          documentId: id,
+          categoryId: categoryId,
+          contentChanged
         }
-        if (vectorIdsToDelete.length > 0) {
-          await this.vectorService.delete(vectorIdsToDelete);
-        }
-
-        const chunkCount = await this.processAndStoreVectors(id, content, 'document', categoryId);
-
-        await this.env.DB.prepare('UPDATE knowledge_docs SET status = ?, chunk_count = ? WHERE id = ?')
-          .bind('active', chunkCount, id)
-          .run();
-      } catch (error: any) {
-        console.error('Vectorization failed:', error);
-        await this.env.DB.prepare('UPDATE knowledge_docs SET status = ? WHERE id = ?')
-          .bind('error', id)
-          .run();
-        throw error;
-      }
-    } else if (categoryChanged) {
-      // Content has not changed, but category changed. Update Vectorize metadata only.
-      try {
-        const chunkCount = doc.chunk_count || 0;
-        if (chunkCount > 0) {
-          const vectorIds = [];
-          for (let i = 0; i < chunkCount; i++) {
-            vectorIds.push(`doc_${id}_${i}`);
-          }
-          
-          const vectors = await this.vectorService.getByIds(vectorIds);
-          
-          if (vectors && vectors.length > 0) {
-            const updatedVectors = vectors.map((v: any) => {
-              const newMetadata = { ...v.metadata };
-              if (categoryId) {
-                newMetadata.category_id = categoryId;
-              } else {
-                delete newMetadata.category_id;
-              }
-              return {
-                id: v.id,
-                values: v.values,
-                metadata: newMetadata
-              };
-            });
-            
-            await this.vectorService.upsertMany(updatedVectors);
-          }
-        }
-      } catch (error: any) {
-        console.error('Vector metadata update failed:', error);
-      }
+      });
     }
   }
 
@@ -357,28 +301,83 @@ export class KnowledgeService {
       .first<{ body: string, chunk_count: number }>();
 
     if (!prevArticle) return;
+    
+    // Optimistic UI/Status: you might want to add a status to articles table, 
+    // but right now it directly updates DB. The workflow will overwrite.
 
-    if (type) {
-      // Vectorize the article (with chunking just in case it's huge)
-      const chunkCount = await this.processAndStoreVectors(articleId, prevArticle.body, 'qa');
-
-      await this.env.DB.prepare('UPDATE articles SET qa_type = ?, chunk_count = ? WHERE id = ?')
-        .bind(type, chunkCount, articleId)
-        .run();
+    if (this.env.VECTORIZE_WORKFLOW) {
+      await this.env.VECTORIZE_WORKFLOW.create({
+        id: `qa_mark_${articleId}_${Date.now()}`,
+        payload: {
+          action: 'qa_mark',
+          documentId: articleId,
+          qaType: type
+        }
+      });
     } else {
-      // Unmark - delete from Vectorize (clear possible chunks)
-      const vectorIdsToDelete = [];
-      const chunkCount = prevArticle.chunk_count || 10;
-      for (let i = 0; i < chunkCount; i++) {
-        vectorIdsToDelete.push(`qa_${articleId}_${i}`);
+      // Fallback
+      if (type) {
+        const chunkCount = await this.processAndStoreVectors(articleId, prevArticle.body, 'qa');
+        await this.env.DB.prepare('UPDATE articles SET qa_type = ?, chunk_count = ? WHERE id = ?')
+          .bind(type, chunkCount, articleId)
+          .run();
+      } else {
+        await this.deleteQAVectors(articleId, prevArticle.chunk_count || 10);
+        await this.env.DB.prepare('UPDATE articles SET qa_type = NULL, chunk_count = 0 WHERE id = ?')
+          .bind(articleId)
+          .run();
       }
-      if (vectorIdsToDelete.length > 0) {
-        await this.vectorService.delete(vectorIdsToDelete);
-      }
+    }
+  }
 
-      await this.env.DB.prepare('UPDATE articles SET qa_type = NULL, chunk_count = 0 WHERE id = ?')
-        .bind(articleId)
-        .run();
+  
+  async deleteDocumentVectors(id: string, chunkCount: number) {
+    const vectorIdsToDelete = [];
+    for (let i = 0; i < chunkCount; i++) {
+      vectorIdsToDelete.push(`doc_${id}_${i}`);
+    }
+    if (vectorIdsToDelete.length > 0) {
+      await this.vectorService.delete(vectorIdsToDelete);
+    }
+  }
+
+  async deleteQAVectors(id: string, chunkCount: number) {
+    const vectorIdsToDelete = [];
+    for (let i = 0; i < chunkCount; i++) {
+      vectorIdsToDelete.push(`qa_${id}_${i}`);
+    }
+    if (vectorIdsToDelete.length > 0) {
+      await this.vectorService.delete(vectorIdsToDelete);
+    }
+  }
+
+  async updateDocumentMetadata(id: string, categoryId?: string | null) {
+    const doc = await this.env.DB.prepare('SELECT chunk_count FROM knowledge_docs WHERE id = ?')
+      .bind(id)
+      .first<{ chunk_count: number }>();
+    if (!doc || !doc.chunk_count) return;
+
+    const vectorIds = [];
+    for (let i = 0; i < doc.chunk_count; i++) {
+      vectorIds.push(`doc_${id}_${i}`);
+    }
+    
+    const vectors = await this.vectorService.getByIds(vectorIds);
+    if (vectors && vectors.length > 0) {
+      const updatedVectors = vectors.map((v: any) => {
+        const newMetadata = { ...v.metadata };
+        if (categoryId) {
+          newMetadata.category_id = categoryId;
+        } else {
+          delete newMetadata.category_id;
+        }
+        return {
+          id: v.id,
+          values: v.values,
+          metadata: newMetadata
+        };
+      });
+      await this.vectorService.upsertMany(updatedVectors);
     }
   }
 

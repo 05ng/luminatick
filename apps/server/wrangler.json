@@ -43,7 +43,15 @@
                 "binding": "AI",
                 "remote": true
         },
-        "observability": {
+        
+  "workflows": [
+    {
+      "name": "vectorize-workflow",
+      "binding": "VECTORIZE_WORKFLOW",
+      "class_name": "VectorizeWorkflow"
+    }
+  ],
+  "observability": {
                 "enabled": true
         }
 }

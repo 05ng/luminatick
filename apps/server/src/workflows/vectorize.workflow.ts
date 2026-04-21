@@ -1,0 +1,86 @@
+import { WorkflowEntrypoint, WorkflowStep, WorkflowEvent } from 'cloudflare:workers';
+import { Env } from '../bindings';
+import { KnowledgeService } from '../services/knowledge.service';
+
+export type VectorizeJob = {
+  action: 'create' | 'update' | 'qa_mark';
+  documentId: string;
+  categoryId?: string | null;
+  qaType?: 'question' | 'answer' | null;
+  contentChanged?: boolean;
+};
+
+export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
+  async run(event: WorkflowEvent<VectorizeJob>, step: WorkflowStep) {
+    const { action, documentId, categoryId, qaType, contentChanged } = event.payload;
+    const knowledgeService = new KnowledgeService(this.env);
+
+    if (action === 'create' || (action === 'update' && contentChanged)) {
+      // Step 1: Read content from DB/R2
+      const { content, title } = await step.do('fetch_content', async () => {
+        const contentStr = await knowledgeService.getArticleContent(documentId);
+        const doc = await this.env.DB.prepare('SELECT title FROM knowledge_docs WHERE id = ?')
+          .bind(documentId)
+          .first<{ title: string }>();
+        return { content: contentStr, title: doc?.title };
+      });
+
+      // Step 2: Delete old vectors if update
+      if (action === 'update') {
+        await step.do('delete_old_vectors', async () => {
+          const doc = await this.env.DB.prepare('SELECT chunk_count FROM knowledge_docs WHERE id = ?')
+            .bind(documentId)
+            .first<{ chunk_count: number }>();
+          
+          if (doc && doc.chunk_count > 0) {
+            await knowledgeService.deleteDocumentVectors(documentId, doc.chunk_count);
+          }
+        });
+      }
+
+      // Step 3: Vectorize
+      const chunkCount = await step.do('vectorize_content', async () => {
+        return await knowledgeService.processAndStoreVectors(documentId, content, 'document', categoryId, title);
+      });
+
+      // Step 4: Update DB Status
+      await step.do('update_status', async () => {
+        await this.env.DB.prepare('UPDATE knowledge_docs SET status = ?, chunk_count = ? WHERE id = ?')
+          .bind('active', chunkCount, documentId)
+          .run();
+      });
+
+    } else if (action === 'update' && !contentChanged) {
+      // Step 1: Update metadata only
+      await step.do('update_metadata', async () => {
+        await knowledgeService.updateDocumentMetadata(documentId, categoryId);
+      });
+    } else if (action === 'qa_mark') {
+      const contentInfo = await step.do('fetch_qa_content', async () => {
+        const article = await this.env.DB.prepare('SELECT body, chunk_count FROM articles WHERE id = ?')
+          .bind(documentId)
+          .first<{ body: string, chunk_count: number }>();
+        if (!article) throw new Error('Article not found');
+        return article;
+      });
+
+      if (qaType) {
+        const chunkCount = await step.do('vectorize_qa', async () => {
+          return await knowledgeService.processAndStoreVectors(documentId, contentInfo.body, 'qa');
+        });
+        await step.do('update_qa_status', async () => {
+          await this.env.DB.prepare('UPDATE articles SET qa_type = ?, chunk_count = ? WHERE id = ?')
+            .bind(qaType, chunkCount, documentId)
+            .run();
+        });
+      } else {
+        await step.do('unmark_qa', async () => {
+          await knowledgeService.deleteQAVectors(documentId, contentInfo.chunk_count);
+          await this.env.DB.prepare('UPDATE articles SET qa_type = NULL, chunk_count = 0 WHERE id = ?')
+            .bind(documentId)
+            .run();
+        });
+      }
+    }
+  }
+}

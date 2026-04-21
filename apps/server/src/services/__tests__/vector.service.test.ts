@@ -49,8 +49,8 @@ describe('VectorService', () => {
     it('should search for nearest vectors and return metadata', async () => {
       const mockMatches = {
         matches: [
-          { metadata: { id: 'm1', text: 'match 1' } },
-          { metadata: { id: 'm2', text: 'match 2' } },
+          { score: 0.8, metadata: { id: 'm1', text: 'match 1' } },
+          { score: 0.75, metadata: { id: 'm2', text: 'match 2' } },
         ],
       };
       (mockEnv.VECTOR_INDEX.query as any).mockResolvedValue(mockMatches);

@@ -1,4 +1,5 @@
 export interface Env {
+  VECTORIZE_WORKFLOW: any; // Type 'Workflow' missing in older workers-types
   DB: D1Database;
   ATTACHMENTS_BUCKET: R2Bucket;
   NOTIFICATION_DO: DurableObjectNamespace;

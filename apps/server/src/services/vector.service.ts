@@ -12,7 +12,8 @@ export class VectorService {
 
   async upsert(id: string, vector: number[], metadata: VectorMetadata): Promise<void> {
     try {
-      console.log(`[VectorService] Upserting vector [${id}] of length ${vector?.length} with metadata:`, JSON.stringify(metadata));
+      const { text, ...safeMetadata } = metadata;
+      console.log(`[VectorService] Upserting vector [${id}] of length ${vector?.length} with metadata:`, JSON.stringify(safeMetadata));
       if (!vector || vector.length === 0) {
         throw new Error('Vector is empty or undefined');
       }
@@ -61,7 +62,9 @@ export class VectorService {
 
       if (!results.matches) return [];
 
-      return results.matches.map((m) => m.metadata as unknown as VectorMetadata);
+      return results.matches
+        .filter((m) => m.score !== undefined && m.score >= 0.7)
+        .map((m) => m.metadata as unknown as VectorMetadata);
     } catch (error) {
       console.error('Vectorize Search Error:', error);
       return [];

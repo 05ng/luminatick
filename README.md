@@ -19,7 +19,7 @@ Luminatick was architected with four core principles in mind:
 - **Backend:** Cloudflare Workers (API), Real-time Presence (WebSockets via SQLite Durable Objects), Cloudflare Email Workers (Inbound).
 - **Frontend:** React + Vite + Tailwind CSS (Admin Dashboard, Customer Portal), Shadow DOM encapsulated React (Widget).
 - **Database/Storage:** Cloudflare D1 (SQLite for metadata), Cloudflare R2 (Hybrid Offloading for ticket payloads and attachments), Cloudflare Vectorize (RAG).
-- **AI:** Cloudflare Workers AI (Llama 3 / DeepSeek, BGE-large embeddings).
+- **AI & Background Processing:** Cloudflare Workers AI (Llama 3 / DeepSeek, BGE-large embeddings), Cloudflare Workflows (asynchronous vectorization).
 - **Email Outbound:** Resend API / Custom SMTP.
 
 ## Architecture
@@ -33,7 +33,7 @@ The project is structured as a monorepo:
 ## Key Features & Workflows
 - **Omnichannel:** Support via email, web widget, and API.
 - **Unified Attachments:** Agents can now upload and send attachments directly from the Admin Dashboard, achieving full feature parity with the Customer Portal's secure R2 presigned URL upload flow.
-- **AI-Powered RAG:** Automatically vectorizes Knowledge Base articles and Agent-marked Q&A pairs from resolved tickets for instant chat resolution and auto-drafting.
+- **AI-Powered RAG & Asynchronous Processing:** Automatically vectorizes Knowledge Base articles and Agent-marked Q&A pairs. Employs Cloudflare Workflows for background text chunking and AI embedding generation to ensure zero-latency UI saves.
 - **Scalable Architecture (Hybrid Offloading):** Stores heavy text payloads (e.g., ticket replies) in R2 and only metadata in D1, completely circumventing D1's 10GB limit.
 - **Application-Layer Encryption:** Uses `APP_MASTER_KEY` to securely encrypt and store third-party integration tokens (e.g., Resend API Key, external APIs) directly in the D1 database, avoiding redeployments for new secrets.
 - **Cloudflare Usage & Costs Tracking:** Integrates with the Cloudflare GraphQL Analytics API to provide a comprehensive dashboard for tracking metrics across Workers, D1, R2, Vectorize, and AI services.

@@ -1,3 +1,4 @@
+import { VectorizeWorkflow } from './workflows/vectorize.workflow';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { Env } from './bindings';
@@ -89,7 +90,7 @@ app.route('/api/v1/widget', widget);
 app.route('/api/v1', v1);
 app.route('/api', dashboard);
 
-export { NotificationDO };
+export { NotificationDO, VectorizeWorkflow };
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
