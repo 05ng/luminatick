@@ -80,6 +80,7 @@ v1.post("/tickets", rateLimiter(10, 60000), async (c) => {
  */
 v1.get("/tickets/:id", async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: 'Missing ID' }, 400);
   const ticketService = new TicketService(c.env);
 
   const ticket = await ticketService.findTicketById(id);
@@ -107,6 +108,7 @@ v1.get("/tickets/:id", async (c) => {
  */
 v1.post("/tickets/:id/articles", rateLimiter(10, 60000), async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: 'Missing ID' }, 400);
   const body = await c.req.json();
   const ticketService = new TicketService(c.env, c.executionCtx);
 
@@ -142,6 +144,7 @@ v1.post("/tickets/:id/articles", rateLimiter(10, 60000), async (c) => {
  */
 v1.patch("/tickets/:id", async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: 'Missing ID' }, 400);
   const body = await c.req.json();
   const ticketService = new TicketService(c.env, c.executionCtx);
 

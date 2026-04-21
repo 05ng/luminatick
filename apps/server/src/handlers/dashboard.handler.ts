@@ -243,6 +243,7 @@ dashboard.post("/api-keys", permissionGuard("api_keys"), async (c) => {
  */
 dashboard.delete("/api-keys/:id", permissionGuard("api_keys"), async (c) => {
   const id = c.req.param("id");
+  if (!id) return c.json({ error: 'Missing ID' }, 400);
   const apiKeyService = new ApiKeyService(c.env);
   await apiKeyService.deleteKey(id);
   return c.json({ success: true });
@@ -411,6 +412,7 @@ dashboard.get("/tickets/:id", async (c) => {
  */
 dashboard.post("/tickets/:id/articles", rateLimiter(10, 60000), async (c) => {
   const ticketId = c.req.param("id");
+  if (!ticketId) return c.json({ error: 'Missing ID' }, 400);
   const payloadBody = await c.req.json();
   const { body, is_internal, attachments: bodyAttachments } = payloadBody;
   const agent = c.get("jwtPayload") as JWTPayload;

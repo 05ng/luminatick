@@ -32,7 +32,7 @@ app.get('/api/realtime', async (c) => {
 
   let user = null;
   try {
-    const authService = new AuthService(c.env, c.executionCtx);
+    const authService = new AuthService(c.env);
     user = await authService.verifyToken(token); // Verify auth before passing to DO
     if (!user) {
       return c.json({ error: 'Unauthorized' }, 401);
@@ -44,7 +44,7 @@ app.get('/api/realtime', async (c) => {
   // Construct a new Request and inject trusted headers
   const newReq = new Request(c.req.raw.url, c.req.raw);
   newReq.headers.set('X-User-ID', user.id);
-  newReq.headers.set('X-User-Name', user.name || user.email);
+  newReq.headers.set('X-User-Name', user.full_name || user.email);
 
   const id = c.env.NOTIFICATION_DO.idFromName('global');
   const obj = c.env.NOTIFICATION_DO.get(id);

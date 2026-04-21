@@ -3,7 +3,7 @@ import { Env } from '../bindings';
 export class BroadcastService {
   constructor(private env: Env) {}
 
-  async broadcast(type: string, payload: any, retries = 2) {
+  async broadcast(type: string, payload: any, retries = 2): Promise<void> {
     if (!this.env.NOTIFICATION_DO) {
       return;
     }
