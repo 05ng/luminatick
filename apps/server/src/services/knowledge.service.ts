@@ -394,13 +394,27 @@ export class KnowledgeService {
 
     // Reverse messages to chronological order
     const orderedMessages = messages.results.reverse();
-    const lastMessage = orderedMessages[orderedMessages.length - 1].body;
-    
+
+    // Find the most recent message that has actual text for the embedding query
+    // Basic regex to strip HTML tags if any, to ensure we don't query just "<p><br></p>"
+    // Truncate to 8000 chars to prevent Event Loop blocking (CPU DoS) on massive payloads.
+    // Use a stricter regex /<[a-zA-Z\/][^>]*>/g to avoid stripping legitimate text like "5 < 6".
+    const validMessages = orderedMessages.filter(m => {
+      if (!m.body) return false;
+      return m.body.substring(0, 8000).replace(/<[a-zA-Z\/][^>]*>/g, '').trim().length > 0;
+    });
+
+    if (validMessages.length === 0) {
+      return 'No text context found in recent messages to generate a suggestion.';
+    }
+
+    const lastValidMessage = validMessages[validMessages.length - 1].body.substring(0, 8000).replace(/<[a-zA-Z\/][^>]*>/g, '').trim();
+
     // Construct multi-turn context
     const chatHistory = orderedMessages.map(m => `${m.sender_type === 'customer' ? 'User' : 'Agent'}: ${m.body}`).join('\n');
 
-    // 2. Search Vectorize using the last message (most relevant for retrieval)
-    const queryEmbedding = await this.aiService.generateEmbeddings(lastMessage);
+    // 2. Search Vectorize using the last valid message (most relevant for retrieval)
+    const queryEmbedding = await this.aiService.generateEmbeddings(lastValidMessage);
     const relevantChunks = await this.vectorService.search(queryEmbedding);
 
     // 3. Generate suggestion
@@ -409,7 +423,6 @@ export class KnowledgeService {
       context: relevantChunks.map((c) => c.text),
     });
   }
-
   async search(query: string, limit: number = 3, categoryId?: string): Promise<{ content: string }[]> {
     // Rely solely on Dense Semantic Search (Vectorize) to preserve D1 read/write limits.
     // Cloudflare Vectorize offers generous free-tier limits, making it the most cost-effective retrieval engine.
