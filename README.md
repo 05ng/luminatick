@@ -1,6 +1,6 @@
 # Luminatick: Open-Source AI-First Ticketing System
 
-[![CI](https://github.com/05ng/luminatick/actions/workflows/ci.yml/badge.svg)](https://github.com/05ng/luminatick/actions/workflows/ci.yml)
+[![CI](https://github.com/05ng/luminatick/actions/workflows/ci.yml/badge.svg)](https://github.com/05ng/luminatick/actions/workflows/ci.yml) [![CodeQL](https://github.com/05ng/luminatick/actions/workflows/codeql.yml/badge.svg)](https://github.com/05ng/luminatick/actions/workflows/codeql.yml)
 
 Luminatick is a decentralized, single-tenant ticketing system built specifically for the Cloudflare ecosystem. It leverages modern edge computing and AI to provide an efficient support experience via email, web forms, and interactive chat.
 
@@ -94,6 +94,13 @@ npm run test --workspace=apps/server
 # Run frontend tests
 npm run test --workspace=apps/dashboard
 ```
+
+### Continuous Integration (CI)
+
+This repository uses GitHub Actions to maintain code quality and security for open-source contributors. On every push and pull request to the `main` branch, the CI pipeline automatically performs:
+- **Automated Testing & Type Checking:** Validates unit tests and TypeScript types across the monorepo.
+- **Build Verification:** Ensures all applications and packages build successfully.
+- **Security Scanning:** GitHub CodeQL automatically analyzes the codebase to detect potential security vulnerabilities and leaked secrets.
 
 ### Production Deployment
 
