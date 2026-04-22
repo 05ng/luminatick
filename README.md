@@ -138,6 +138,7 @@ For a detailed guide, see [docs/deployment.md](docs/deployment.md).
 - [Architecture Overview](docs/design-and-implementation-plan.md)
 - [Deployment Guide](docs/deployment.md)
 - [Email Setup Guide](docs/email-setup.md)
+- [Knowledge Base Setup Guide](docs/knowledge-base-setup.md)
 - [API Specification](docs/phase-1.4-api-spec.md)
 
 ## Development Conventions
