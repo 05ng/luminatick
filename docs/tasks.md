@@ -153,6 +153,11 @@
 - [ ] Implement Advanced Knowledge Base & AI Agent Enhancements (see `docs/knowledge-enhancement-plan.md` and `docs/kb-agent-enhancement-plan.md`)
 
 ## Recent Enhancements & Fixes
+- [x] **AI Suggestion & RAG Fixes:**
+    - [x] Unified vector search across Answer and SOP tiers (replaced sequential querying).
+    - [x] Adjusted tier similarity thresholds and increased top-K limits to prevent valid SOPs from being pushed out by generic answers.
+    - [x] Handled R2 body hydration for AI context retrieval, adapting to the recent Option 3 R2 offloading migration for article bodies.
+    - [x] Implemented strict security mitigations, including system prompt reinforcement against prompt injection and explicit memory/CPU limits to prevent DoS via massive token contexts.
 - [x] **Knowledge Base Enhancements:**
     - [x] Added hierarchical category management (CRUD for `knowledge_categories`).
     - [x] Implemented a split-pane UI for the Knowledge Base page (Category Tree + Article List).

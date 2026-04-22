@@ -43,8 +43,9 @@ export function TicketDetailPage() {
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Filter presence to find other agents viewing this ticket
-  const viewers = presence.filter(p => p.location === `ticket:${id}`);
+  // Filter presence to find other agents viewing this ticket and deduplicate by userId
+  const rawViewers = presence.filter(p => p.location === `ticket:${id}`);
+  const viewers = Array.from(new Map(rawViewers.map(v => [v.userId, v])).values());
 
   useEffect(() => {
     updateLocation(`ticket:${id}`);

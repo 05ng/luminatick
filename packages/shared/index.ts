@@ -218,3 +218,27 @@ export interface UsageStats {
   };
 }
 
+
+export interface KnowledgeArticle {
+  id: string;
+  title: string;
+  category_id: string | null;
+  file_path: string;
+  status: 'active' | 'processing' | 'error';
+  tier?: 'answer' | 'sop';
+  created_at: string;
+}
+
+export interface CreateArticleArgs {
+  title: string;
+  content: string;
+  category_id?: string | null;
+  tier?: 'answer' | 'sop';
+}
+
+export interface UpdateArticleArgs {
+  title: string;
+  content: string;
+  category_id?: string | null;
+  tier?: 'answer' | 'sop';
+}

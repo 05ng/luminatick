@@ -30,6 +30,17 @@ describe('AiService', () => {
       expect(result).toEqual([0.1, 0.2, 0.3]);
     });
 
+    it('should handle flat array returned by some AI models', async () => {
+      const mockResult = {
+        data: [0.4, 0.5, 0.6],
+      };
+      (mockEnv.AI.run as any).mockResolvedValue(mockResult);
+
+      const result = await aiService.generateEmbeddings('test text');
+
+      expect(result).toEqual([0.4, 0.5, 0.6]);
+    });
+
     it('should throw error if no data is returned', async () => {
       (mockEnv.AI.run as any).mockResolvedValue({ data: [] });
 
@@ -62,6 +73,29 @@ describe('AiService', () => {
         ]),
       }));
       expect(result).toBe('Suggested response');
+    });
+
+    it('should include systemInstruction in the system prompt if provided', async () => {
+      const mockResult = {
+        response: 'SOP Suggested response',
+      };
+      (mockEnv.AI.run as any).mockResolvedValue(mockResult);
+
+      const result = await aiService.generateSuggestion({
+        input: 'I lost my access code.',
+        context: ['SOP: ask for email.'],
+        systemInstruction: 'IMPORTANT: Do not expose SOP.',
+      });
+
+      expect(mockEnv.AI.run).toHaveBeenCalledWith('@cf/meta/llama-3-8b-instruct', expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({ 
+            role: 'system',
+            content: expect.stringContaining('IMPORTANT: Do not expose SOP.')
+          }),
+        ]),
+      }));
+      expect(result).toBe('SOP Suggested response');
     });
 
     it('should return a friendly error message on failure', async () => {

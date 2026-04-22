@@ -290,6 +290,7 @@ export const KnowledgePage: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -311,6 +312,13 @@ export const KnowledgePage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        doc.tier === 'sop' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {doc.tier === 'sop' ? 'SOP' : 'Answer'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(doc.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -325,7 +333,7 @@ export const KnowledgePage: React.FC = () => {
                 ))}
                 {filteredDocs.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
                       No articles found in this category.
                     </td>
                   </tr>

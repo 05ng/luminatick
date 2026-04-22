@@ -16,7 +16,7 @@ describe('NotificationDO', () => {
     mockWS = {
       send: vi.fn(),
       serializeAttachment: vi.fn(),
-      deserializeAttachment: vi.fn().mockReturnValue({ userId: '1', name: 'Agent', location: null }),
+      deserializeAttachment: vi.fn().mockReturnValue({ connectionId: 'test-conn-1', userId: '1', name: 'Agent', location: null }),
     };
     doInstance = new NotificationDO(mockState, mockEnv);
   });
@@ -40,7 +40,7 @@ describe('NotificationDO', () => {
   it('should initialize session attachment and broadcast presence on connection', async () => {
     const otherWS = { 
       send: vi.fn(), 
-      deserializeAttachment: vi.fn().mockReturnValue({ userId: '2', name: 'Other', location: 'ticket:1' }) 
+      deserializeAttachment: vi.fn().mockReturnValue({ connectionId: 'test-conn-2', userId: '2', name: 'Other', location: 'ticket:1' }) 
     };
     mockState.getWebSockets.mockReturnValue([mockWS, otherWS]);
 
@@ -80,6 +80,7 @@ describe('NotificationDO', () => {
 
     // Verify serializeAttachment was called with initial state
     expect(serverWS.serializeAttachment).toHaveBeenCalledWith({
+      connectionId: expect.any(String),
       userId: '1',
       name: 'Agent',
       location: null,
@@ -97,7 +98,7 @@ describe('NotificationDO', () => {
   it('should handle presence updates and truncate long locations to prevent memory bloat', async () => {
     const otherWS = { 
       send: vi.fn(), 
-      deserializeAttachment: vi.fn().mockReturnValue({ userId: '2', name: 'Other', location: null }) 
+      deserializeAttachment: vi.fn().mockReturnValue({ connectionId: 'test-conn-2', userId: '2', name: 'Other', location: null }) 
     };
     mockState.getWebSockets.mockReturnValue([mockWS, otherWS]);
 
@@ -111,6 +112,7 @@ describe('NotificationDO', () => {
 
     // Should truncate to 100 chars
     expect(mockWS.serializeAttachment).toHaveBeenCalledWith({
+      connectionId: 'test-conn-1',
       userId: '1',
       name: 'Agent',
       location: 'a'.repeat(100)
@@ -130,6 +132,7 @@ describe('NotificationDO', () => {
     expect(otherWS.send).toHaveBeenCalledWith(JSON.stringify({
       type: 'presence.update',
       payload: {
+        connectionId: 'test-conn-1',
         userId: '1',
         name: 'Agent',
         status: 'offline',

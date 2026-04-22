@@ -97,6 +97,7 @@ const articleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
   content: z.string().min(1, 'Content is required'),
   category_id: z.string().uuid().optional().nullable(),
+  tier: z.enum(['answer', 'sop']).optional(),
 });
 
 // Category endpoints
@@ -141,9 +142,9 @@ knowledgeHandler.post('/articles', async (c) => {
     return c.json({ error: result.error.errors[0].message }, 400);
   }
 
-  const { title, content, category_id } = result.data;
+  const { title, content, category_id, tier } = result.data;
   const service = new KnowledgeService(c.env);
-  const id = await service.createArticle(title, content, category_id || null);
+  const id = await service.createArticle(title, content, category_id || null, tier);
   return c.json({ id });
 });
 
@@ -155,9 +156,9 @@ knowledgeHandler.put('/articles/:id', async (c) => {
     return c.json({ error: result.error.errors[0].message }, 400);
   }
 
-  const { title, content, category_id } = result.data;
+  const { title, content, category_id, tier } = result.data;
   const service = new KnowledgeService(c.env);
-  await service.updateArticle(id, title, content, category_id || null);
+  await service.updateArticle(id, title, content, category_id || null, tier);
   return c.json({ success: true });
 });
 

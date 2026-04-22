@@ -5,6 +5,7 @@ export interface VectorMetadata extends Record<string, any> {
   type: 'document' | 'qa';
   text: string;
   category_id?: string;
+  tier?: 'answer' | 'sop';
 }
 
 export class VectorService {
@@ -52,7 +53,7 @@ export class VectorService {
     }
   }
 
-  async search(vector: number[], topK: number = 5, filter?: Record<string, any>): Promise<VectorMetadata[]> {
+  async search(vector: number[], topK: number = 5, filter?: Record<string, any>): Promise<{metadata: VectorMetadata, score: number}[]> {
     try {
       const results = await this.env.VECTOR_INDEX.query(vector, {
         topK,
@@ -64,7 +65,10 @@ export class VectorService {
 
       return results.matches
         .filter((m) => m.score !== undefined && m.score >= 0.5)
-        .map((m) => m.metadata as unknown as VectorMetadata);
+        .map((m) => ({
+          metadata: m.metadata as unknown as VectorMetadata,
+          score: m.score as number
+        }));
     } catch (error) {
       console.error('Vectorize Search Error:', error);
       return [];

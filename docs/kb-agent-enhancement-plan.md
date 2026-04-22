@@ -55,3 +55,12 @@ The Web Widget (`/api/v1/widget/chat`) now supports multi-turn conversational me
 Retrieval has been optimized by leveraging Cloudflare Vectorize's native metadata filtering. When a user interacts with the widget within a specific context (e.g., browsing a particular category), the frontend passes the `category_id` to the chat API. The backend injects this as a metadata filter (`{ category_id: "..." }`) directly into the Vectorize similarity search.
 - **Zero D1 Reads:** This pre-filtering narrows down the relevant vector chunks purely at the Vectorize layer. The system no longer needs to fetch excess chunks from D1 and filter them in memory, saving significant D1 Read operations.
 - **Reduced Hallucinations:** By strictly scoping the RAG context to the user's current category, the LLM is less likely to hallucinate or provide answers from unrelated product areas.
+
+### Recent Architectural Refinements & Security Measures
+
+To ensure scalability, security, and correctness in our RAG pipeline, several critical fixes and optimizations were introduced:
+
+1. **Unified Vector Search:** The previous approach of sequentially querying the database for `answer` and `sop` tiers was replaced with a **unified vector search** that queries both tiers simultaneously. 
+2. **Threshold & Top-K Adjustments:** To prevent high-scoring, generic Answers from starving out highly specific SOPs, the similarity threshold and the `topK` retrieval limit have been recalibrated and increased, ensuring valid internal procedures always enter the context window for agents.
+3. **R2 Body Hydration:** Aligning with the "Option 3" database offloading migration, the AI context retrieval now seamlessly fetches article bodies directly from R2. Vector metadata retrieved from D1 provides the keys, and the system hydrates the context payload by reading the large document bodies from R2, effectively avoiding D1 storage limits.
+4. **Security Hardening (Prompt Injection & DoS):** System prompts were heavily reinforced with strict boundary markers to prevent prompt injection from user-submitted text. Additionally, explicit memory and CPU limits were added by capping the maximum concatenated token length, mitigating DoS risks stemming from excessively large context payloads.

@@ -1,0 +1,1 @@
+ALTER TABLE knowledge_docs ADD COLUMN tier TEXT CHECK(tier IN ('answer', 'sop')) DEFAULT 'answer';

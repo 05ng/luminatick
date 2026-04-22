@@ -1,6 +1,7 @@
 import { Env } from '../bindings';
 
 interface SessionAttachment {
+  connectionId: string;
   userId: string;
   name: string;
   location: string | null;
@@ -50,6 +51,7 @@ export class NotificationDO {
     this.state.acceptWebSocket(ws);
 
     const attachment: SessionAttachment = {
+      connectionId: crypto.randomUUID(),
       userId: user.id,
       name: user.name,
       location: null,
@@ -67,6 +69,7 @@ export class NotificationDO {
     this.broadcast({
       type: 'presence.update',
       payload: {
+        connectionId: attachment.connectionId,
         userId: user.id,
         name: user.name,
         location: null,
@@ -93,6 +96,7 @@ export class NotificationDO {
           this.broadcast({
             type: 'presence.update',
             payload: {
+              connectionId: attachment.connectionId,
               userId: attachment.userId,
               name: attachment.name,
               location: attachment.location,
@@ -113,6 +117,7 @@ export class NotificationDO {
       this.broadcast({
         type: 'presence.update',
         payload: {
+          connectionId: attachment.connectionId,
           userId: attachment.userId,
           name: attachment.name,
           status: 'offline',

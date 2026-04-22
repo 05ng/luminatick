@@ -115,5 +115,6 @@ export interface KnowledgeDoc {
   category_id: string | null;
   file_path: string;
   status: 'active' | 'processing' | 'error';
+  tier?: 'answer' | 'sop';
   created_at: string;
 }

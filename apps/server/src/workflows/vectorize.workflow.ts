@@ -33,11 +33,11 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
       // Done in one step to prevent large text payloads from exceeding the 1MB workflow state limit.
       const chunkCount = await step.do('fetch_and_vectorize', async () => {
         const contentStr = await knowledgeService.getArticleContent(documentId);
-        const doc = await this.env.DB.prepare('SELECT title FROM knowledge_docs WHERE id = ?')
+        const doc = await this.env.DB.prepare('SELECT title, tier FROM knowledge_docs WHERE id = ?')
           .bind(documentId)
-          .first<{ title: string }>();
+          .first<{ title: string, tier: string }>();
           
-        return await knowledgeService.processAndStoreVectors(documentId, contentStr, 'document', categoryId, doc?.title);
+        return await knowledgeService.processAndStoreVectors(documentId, contentStr, 'document', categoryId, doc?.title, (doc?.tier as 'answer' | 'sop') || 'answer');
       });
 
       // Step 3: Update DB Status
@@ -56,12 +56,24 @@ export class VectorizeWorkflow extends WorkflowEntrypoint<Env, VectorizeJob> {
       if (qaType) {
         // Fetch and vectorize in one step
         const chunkCount = await step.do('fetch_and_vectorize_qa', async () => {
-          const article = await this.env.DB.prepare('SELECT body FROM articles WHERE id = ?')
+          const article = await this.env.DB.prepare('SELECT body, body_r2_key FROM articles WHERE id = ?')
             .bind(documentId)
-            .first<{ body: string }>();
+            .first<{ body: string | null, body_r2_key: string | null }>();
           if (!article) throw new Error('Article not found');
           
-          return await knowledgeService.processAndStoreVectors(documentId, article.body, 'qa');
+          let bodyText = article.body || '';
+          if (!bodyText && article.body_r2_key) {
+            try {
+              const obj = await this.env.ATTACHMENTS_BUCKET.get(article.body_r2_key);
+              if (obj) {
+                bodyText = await obj.text();
+              }
+            } catch (err) {
+              console.error('Failed to fetch article body from R2 in workflow', err);
+            }
+          }
+          
+          return await knowledgeService.processAndStoreVectors(documentId, bodyText, 'qa');
         });
         
         await step.do('update_qa_status', async () => {

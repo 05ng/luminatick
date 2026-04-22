@@ -13,6 +13,7 @@ export const KnowledgeEditorPage: React.FC = () => {
 
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState<string>(searchParams.get('categoryId') || '');
+  const [tier, setTier] = useState<'answer' | 'sop'>('answer');
   const [content, setContent] = useState<string>('');
   
   const [categories, setCategories] = useState<KnowledgeCategory[]>([]);
@@ -40,6 +41,7 @@ export const KnowledgeEditorPage: React.FC = () => {
           
           setTitle(doc.title);
           setCategoryId(doc.category_id || '');
+          setTier(doc.tier || 'answer');
           // Content might be plain text string from the endpoint, depending on how API is built
           setContent(articleContent.content || articleContent || '');
         } catch (err: any) {
@@ -63,13 +65,15 @@ export const KnowledgeEditorPage: React.FC = () => {
         await dashboardApi.put(`/knowledge/articles/${id}`, {
           title,
           category_id: categoryId || null,
-          content
+          content,
+          tier
         });
       } else {
         await dashboardApi.post('/knowledge/articles', {
           title,
           category_id: categoryId || null,
-          content
+          content,
+          tier
         });
       }
       navigate('/knowledge');
@@ -140,7 +144,7 @@ export const KnowledgeEditorPage: React.FC = () => {
 
           <div className="bg-white shadow rounded-lg p-6 border border-gray-200 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                 <input
                   type="text"
@@ -161,6 +165,18 @@ export const KnowledgeEditorPage: React.FC = () => {
                 >
                   <option value="">No Category (Root)</option>
                   {renderCategoryOptions(categories)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                <select
+                  value={tier}
+                  onChange={e => setTier(e.target.value as 'answer' | 'sop')}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="answer">Customer Facing Answer</option>
+                  <option value="sop">Internal SOP (Standard Operating Procedure)</option>
                 </select>
               </div>
             </div>

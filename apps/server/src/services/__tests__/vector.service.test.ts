@@ -62,7 +62,7 @@ describe('VectorService', () => {
         returnMetadata: true,
       });
       expect(result).toHaveLength(2);
-      expect(result[0].text).toBe('match 1');
+      expect(result[0].metadata.text).toBe('match 1');
     });
 
     it('should pass filter to VECTOR_INDEX.query when provided', async () => {

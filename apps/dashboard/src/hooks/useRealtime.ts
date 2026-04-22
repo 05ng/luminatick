@@ -57,11 +57,11 @@ export function useRealtime() {
           } else if (data.type === 'presence.update') {
             setPresence(prev => {
               if (data.payload.status === 'offline') {
-                return prev.filter(p => p.userId !== data.payload.userId);
+                return prev.filter(p => p.connectionId !== data.payload.connectionId);
               }
-              const exists = prev.find(p => p.userId === data.payload.userId);
+              const exists = prev.find(p => p.connectionId === data.payload.connectionId);
               if (exists) {
-                return prev.map(p => p.userId === data.payload.userId ? data.payload : p);
+                return prev.map(p => p.connectionId === data.payload.connectionId ? data.payload : p);
               }
               return [...prev, data.payload];
             });

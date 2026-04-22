@@ -83,3 +83,18 @@ To guarantee zero-latency responses in the UI when creating articles or marking 
 - **AI Suggestion UI**: The "Use Suggestion" feature was expanded to offer "Append" and "Replace All" options, giving agents more flexibility.
 - **Visual Feedback**: Added an "INDEXED" badge with a `ShieldCheck` icon to any article currently active in the RAG system, providing immediate confirmation of agent actions.
 - **Progress Indicators**: Knowledge upload now features an animated spinner and "Indexing..." state to manage agent expectations during vectorization.
+
+## 7. Recent Architecture & Security Enhancements (Post-Migration Update)
+
+To support the transition to the Option 3 storage architecture (R2 article body offloading) and to improve the safety and accuracy of the AI suggestions, the RAG pipeline was recently overhauled:
+
+### 7.1. Unified Search & Tiering Logic
+- **Unified Vector Querying:** The system now executes a single, unified vector search across both `answer` and `sop` knowledge tiers, replacing the older sequential query method.
+- **Threshold & Top-K Adjustments:** The similarity threshold and `topK` parameters were increased to guarantee that highly specific SOPs are retained in the context window and not displaced by more generic Answer articles.
+
+### 7.2. R2 Context Hydration
+- **Body Hydration:** Because article bodies are now offloaded to Cloudflare R2 to bypass D1 storage limits, the RAG retrieval pipeline was updated to fetch the full text payload directly from R2 using the retrieved vector metadata, dynamically hydrating the context window before calling the LLM.
+
+### 7.3. Advanced Security Mitigations
+- **Prompt Injection Defense:** System prompts have been strictly hardened with explicit boundary markers and adversarial instruction safeguards to prevent user-supplied ticket text from overriding the AI's core directives.
+- **DoS Memory/CPU Limits:** To prevent Denial of Service (DoS) attacks via excessive token contexts, explicit limits on the aggregated context size and CPU execution time have been enforced before passing payloads to Cloudflare Workers AI.

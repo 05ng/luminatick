@@ -84,7 +84,7 @@ describe("Knowledge Handler Integration Tests", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data).toEqual({ id: "new-article-id" });
-      expect(mockCreate).toHaveBeenCalledWith("Title", "Content", null);
+      expect(mockCreate).toHaveBeenCalledWith("Title", "Content", null, undefined);
     });
 
     it("should reject creating an article with missing content", async () => {
@@ -98,7 +98,7 @@ describe("Knowledge Handler Integration Tests", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data).toEqual({ success: true });
-      expect(mockUpdate).toHaveBeenCalledWith("art-1", "New Title", "New Content", null);
+      expect(mockUpdate).toHaveBeenCalledWith("art-1", "New Title", "New Content", null, undefined);
     });
 
     it("should get article content", async () => {
