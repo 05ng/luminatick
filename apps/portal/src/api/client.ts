@@ -35,7 +35,12 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
   if (response.status === 401) {
     useAuthStore.getState().logout();
-    if (window.location.pathname !== '/login' && window.location.pathname !== '/verify') {
+    const isAuthPage =
+      window.location.pathname === '/login' ||
+      window.location.pathname === '/verify' ||
+      window.location.pathname.startsWith('/auth/verify');
+
+    if (!isAuthPage) {
       window.location.href = '/login';
     }
     throw new ApiError('Unauthorized', 401);
