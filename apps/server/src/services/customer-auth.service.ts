@@ -68,7 +68,7 @@ export class CustomerAuthService {
 
     // 4. Send Email
     if (type === 'magic_link') {
-      const url = `${baseUrl || 'http://localhost:5173'}/auth/verify?token=${plainToken}`;
+      const url = `${baseUrl || 'http://localhost:5173'}/verify?token=${plainToken}`;
       try {
         await this.emailService.send({
           to: [lowerEmail],
