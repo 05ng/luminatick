@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTickets, useCreateTicket } from '../hooks/useTickets';
 import { useGroups, useAgents } from '../hooks/useGroups';
 import { useFilters } from '../hooks/useFilters';
@@ -39,7 +40,11 @@ const priorityColors = {
   urgent: 'text-red-500',
 };
 
+/** The seeded "All Tickets" system filter duplicates the built-in list entry. */
+const ALL_TICKETS_FILTER_ID = 'filter_system_all';
+
 export function TicketListPage() {
+  const { t } = useTranslation();
   const [activeFilterId, setActiveFilterId] = useState<string>('');
   const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,6 +80,10 @@ export function TicketListPage() {
 
   const { data: filters, isLoading: isLoadingFilters } = useFilters();
   
+  const activeFilter = filters?.find(f => f.id === activeFilterId);
+  // The built-in "All Tickets" entry already covers filter_system_all, so hide the duplicate.
+  const visibleFilters = filters?.filter(f => f.id !== ALL_TICKETS_FILTER_ID);
+
   const { data: paginatedData, isLoading: isLoadingTickets } = useTickets({
     page: page.toString(),
     ...(activeFilterId ? { filter_id: activeFilterId } : {}),
@@ -124,7 +133,7 @@ export function TicketListPage() {
     <div className="flex h-full gap-6">
       {/* Left Sidebar: Filters */}
       <div className="w-64 flex flex-col gap-2 shrink-0">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Filters</h2>
+        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">{t('tickets.filters')}</h2>
         <button
           onClick={() => handleFilterClick('')}
           className={cn(
@@ -135,12 +144,12 @@ export function TicketListPage() {
           )}
         >
           <LayoutList className="w-4 h-4" />
-          All Tickets
+          {t('tickets.allTickets')}
         </button>
         {isLoadingFilters ? (
-          <div className="px-3 py-2 text-sm text-slate-500">Loading filters...</div>
+          <div className="px-3 py-2 text-sm text-slate-500">{t('tickets.loadingFilters')}</div>
         ) : (
-          filters?.map(filter => (
+          visibleFilters?.map(filter => (
             <button
               key={filter.id}
               onClick={() => handleFilterClick(filter.id)}
@@ -162,11 +171,9 @@ export function TicketListPage() {
       <div className="flex-1 flex flex-col min-w-0 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Tickets</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t('tickets.listTitle')}</h1>
             <p className="text-slate-500 text-sm">
-              {activeFilterId 
-                ? filters?.find(f => f.id === activeFilterId)?.name 
-                : 'All Tickets'}
+              {activeFilter ? activeFilter.name : t('tickets.allTickets')}
             </p>
           </div>
           <button 
@@ -174,7 +181,7 @@ export function TicketListPage() {
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-sm text-sm"
           >
             <Plus className="w-4 h-4" />
-            New Ticket
+            {t('tickets.newTicket')}
           </button>
         </div>
 
@@ -184,7 +191,7 @@ export function TicketListPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text"
-                placeholder="Search tickets..."
+                placeholder={t('tickets.searchPlaceholder')}
                 className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -203,7 +210,7 @@ export function TicketListPage() {
               />
             </div>
             <div className="text-sm text-slate-500 font-medium">
-              Total: {meta.total}
+              {t('tickets.total')}: {meta.total}
             </div>
           </div>
 
@@ -212,22 +219,22 @@ export function TicketListPage() {
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
                   <th className="px-6 py-4 border-b border-slate-200">ID</th>
-                  <th className="px-6 py-4 border-b border-slate-200">Subject</th>
-                  <th className="px-6 py-4 border-b border-slate-200">Status</th>
-                  <th className="px-6 py-4 border-b border-slate-200">Priority</th>
-                  <th className="px-6 py-4 border-b border-slate-200">Customer</th>
-                  <th className="px-6 py-4 border-b border-slate-200">Last Update</th>
-                  <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
+                  <th className="px-6 py-4 border-b border-slate-200">{t('tickets.subject')}</th>
+                  <th className="px-6 py-4 border-b border-slate-200">{t('common.status')}</th>
+                  <th className="px-6 py-4 border-b border-slate-200">{t('common.priority')}</th>
+                  <th className="px-6 py-4 border-b border-slate-200">{t('tickets.customer')}</th>
+                  <th className="px-6 py-4 border-b border-slate-200">{t('tickets.lastUpdate')}</th>
+                  <th className="px-6 py-4 border-b border-slate-200 text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {isLoadingTickets ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">Loading tickets...</td>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">{t('tickets.loadingTickets')}</td>
                   </tr>
                 ) : tickets.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">No tickets found.</td>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">{t('tickets.empty')}</td>
                   </tr>
                 ) : (
                   tickets.map((ticket) => (
@@ -246,7 +253,7 @@ export function TicketListPage() {
                               setTimeout(() => setCopiedId(null), 2000);
                             }}
                             className="p-1 rounded-md hover:bg-slate-100 text-slate-400 transition-colors opacity-0 group-hover/copy:opacity-100 focus:opacity-100"
-                            title="Copy ticket number"
+                            title={t('tickets.copyNumber')}
                           >
                             {copiedId === ticket.id ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                           </button>
@@ -267,13 +274,13 @@ export function TicketListPage() {
                           "px-2.5 py-0.5 rounded-full text-xs font-medium border",
                           statusColors[ticket.status as keyof typeof statusColors] || statusColors.open
                         )}>
-                          {ticket.status}
+                          {t(`ticketStatus.${ticket.status}`, ticket.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 text-sm">
                           <AlertCircle className={clsx("w-4 h-4", priorityColors[ticket.priority as keyof typeof priorityColors] || priorityColors.normal)} />
-                          <span className="capitalize">{ticket.priority}</span>
+                          <span>{t(`priority.${ticket.priority}`, ticket.priority)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -306,7 +313,7 @@ export function TicketListPage() {
                                 to={`/tickets/${ticket.id}`}
                                 className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-600 text-left w-full"
                               >
-                                View Ticket
+                                {t('tickets.viewTicket')}
                               </Link>
                             </div>
                           </>
@@ -323,7 +330,7 @@ export function TicketListPage() {
           {meta.total_pages > 1 && (
             <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
               <span className="text-sm text-slate-500 font-medium">
-                Showing page {meta.page} of {meta.total_pages}
+                {t('tickets.showingPage', { page: meta.page, total: meta.total_pages })}
               </span>
               <div className="flex gap-2">
                 <button
@@ -332,14 +339,14 @@ export function TicketListPage() {
                   className="px-3 py-1.5 border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 bg-white shadow-sm transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  {t('common.previous')}
                 </button>
                 <button
                   onClick={() => setPage(p => Math.min(meta.total_pages, p + 1))}
                   disabled={page === meta.total_pages}
                   className="px-3 py-1.5 border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 bg-white shadow-sm transition-colors"
                 >
-                  Next
+                  {t('common.next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -353,7 +360,7 @@ export function TicketListPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Create New Ticket</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t('tickets.createTitle')}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-6 h-6" />
               </button>
@@ -361,7 +368,7 @@ export function TicketListPage() {
             <form onSubmit={handleCreateTicket} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('tickets.subject')}</label>
                   <input
                     type="text"
                     required
@@ -371,7 +378,7 @@ export function TicketListPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Customer Email</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('tickets.customerEmail')}</label>
                   <input
                     type="email"
                     required
@@ -381,39 +388,39 @@ export function TicketListPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.priority')}</label>
                   <select
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   >
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="low">{t('priority.low')}</option>
+                    <option value="normal">{t('priority.normal')}</option>
+                    <option value="high">{t('priority.high')}</option>
+                    <option value="urgent">{t('priority.urgent')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Group</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('tickets.group')}</label>
                   <select
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={formData.group_id}
                     onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
                   >
-                    <option value="">No Group</option>
+                    <option value="">{t('tickets.noGroup')}</option>
                     {groups?.map((group) => (
                       <option key={group.id} value={group.id}>{group.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Assignee</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('tickets.assignee')}</label>
                   <select
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={formData.assigned_to}
                     onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
                   >
-                    <option value="">Unassigned</option>
+                    <option value="">{t('tickets.unassigned')}</option>
                     {agents?.map((agent) => (
                       <option key={agent.id} value={agent.id}>{agent.full_name || agent.email}</option>
                     ))}
@@ -421,7 +428,7 @@ export function TicketListPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Initial Message</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('tickets.initialMessage')}</label>
                 <textarea
                   required
                   rows={4}
@@ -436,14 +443,14 @@ export function TicketListPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={createTicket.isPending}
                   className="px-4 py-2 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {createTicket.isPending ? 'Creating...' : 'Create Ticket'}
+                  {createTicket.isPending ? t('tickets.creating') : t('tickets.createTicket')}
                 </button>
               </div>
             </form>

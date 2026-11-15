@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../api/client';
 import { KnowledgeCategory } from '../types';
 import MDEditor from '@uiw/react-md-editor';
@@ -9,6 +10,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 export const KnowledgeEditorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
@@ -54,7 +56,7 @@ export const KnowledgeEditorPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setError('Title is required');
+      setError(t('knowledgeEditor.errors.titleRequired'));
       return;
     }
     
@@ -112,7 +114,7 @@ export const KnowledgeEditorPage: React.FC = () => {
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-xl font-bold text-gray-900">
-            {id ? 'Edit Article' : 'New Article'}
+            {id ? t('knowledgeEditor.titleEdit') : t('knowledgeEditor.titleNew')}
           </h1>
         </div>
         
@@ -129,7 +131,7 @@ export const KnowledgeEditorPage: React.FC = () => {
           ) : (
             <Save size={16} className="mr-2" />
           )}
-          {isSaving ? 'Processing...' : 'Save Article'}
+          {isSaving ? t('knowledgeEditor.processing') : t('knowledgeEditor.saveArticle')}
         </button>
       </div>
 
@@ -145,44 +147,44 @@ export const KnowledgeEditorPage: React.FC = () => {
           <div className="bg-white shadow rounded-lg p-6 border border-gray-200 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('knowledgeEditor.fieldTitle')}</label>
                 <input
                   type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="e.g., How to reset your password"
+                  placeholder={t('knowledgeEditor.titlePlaceholder')}
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('knowledgeEditor.category')}</label>
                 <select
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
-                  <option value="">No Category (Root)</option>
+                  <option value="">{t('knowledgeEditor.noCategory')}</option>
                   {renderCategoryOptions(categories)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('knowledgeEditor.tier')}</label>
                 <select
                   value={tier}
                   onChange={e => setTier(e.target.value as 'answer' | 'sop')}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
-                  <option value="answer">Customer Facing Answer</option>
-                  <option value="sop">Internal SOP (Standard Operating Procedure)</option>
+                  <option value="answer">{t('knowledgeEditor.tierAnswer')}</option>
+                  <option value="sop">{t('knowledgeEditor.tierSop')}</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('knowledgeEditor.content')}</label>
               <div data-color-mode="light">
                 <MDEditor
                   value={content}

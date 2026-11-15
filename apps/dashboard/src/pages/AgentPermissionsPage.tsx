@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Save, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { dashboardApi } from '../api/client';
 
 const SETTING_MODULES = [
-  { key: 'general', name: 'General Settings', description: 'Access to system-wide configuration' },
-  { key: 'users', name: 'Users', description: 'Manage agents, admins, and customers' },
-  { key: 'groups', name: 'Groups', description: 'Manage ticket assignment groups' },
-  { key: 'ticket_fields', name: 'Ticket Fields', description: 'Configure custom ticket fields' },
-  { key: 'filters', name: 'Filters', description: 'Manage global ticket filters' },
-  { key: 'automations', name: 'Automations', description: 'Create and edit automation rules' },
-  { key: 'api_keys', name: 'API Keys', description: 'Manage API access tokens' },
-  { key: 'usage', name: 'Usage & Costs', description: 'View billing and usage metrics' },
-  { key: 'channels_email', name: 'Email Channels', description: 'Configure inbound email settings' },
-  { key: 'channels_widget', name: 'Widget Channels', description: 'Configure web widget settings' },
+  { key: 'general', nameKey: 'settings.agentPermissions.modules.general', descriptionKey: 'settings.agentPermissions.modules.generalDesc' },
+  { key: 'users', nameKey: 'settings.agentPermissions.modules.users', descriptionKey: 'settings.agentPermissions.modules.usersDesc' },
+  { key: 'groups', nameKey: 'settings.agentPermissions.modules.groups', descriptionKey: 'settings.agentPermissions.modules.groupsDesc' },
+  { key: 'ticket_fields', nameKey: 'settings.agentPermissions.modules.ticketFields', descriptionKey: 'settings.agentPermissions.modules.ticketFieldsDesc' },
+  { key: 'filters', nameKey: 'settings.agentPermissions.modules.filters', descriptionKey: 'settings.agentPermissions.modules.filtersDesc' },
+  { key: 'automations', nameKey: 'settings.agentPermissions.modules.automations', descriptionKey: 'settings.agentPermissions.modules.automationsDesc' },
+  { key: 'api_keys', nameKey: 'settings.agentPermissions.modules.apiKeys', descriptionKey: 'settings.agentPermissions.modules.apiKeysDesc' },
+  { key: 'usage', nameKey: 'settings.agentPermissions.modules.usage', descriptionKey: 'settings.agentPermissions.modules.usageDesc' },
+  { key: 'channels_email', nameKey: 'settings.agentPermissions.modules.emailChannels', descriptionKey: 'settings.agentPermissions.modules.emailChannelsDesc' },
+  { key: 'channels_widget', nameKey: 'settings.agentPermissions.modules.widgetChannels', descriptionKey: 'settings.agentPermissions.modules.widgetChannelsDesc' },
 ];
 
 export function AgentPermissionsPage() {
+  const { t } = useTranslation();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,7 +34,7 @@ export function AgentPermissionsPage() {
       const data = await dashboardApi.get('/permissions');
       setPermissions((data || {}) as Record<string, boolean>);
     } catch (err: any) {
-      setError(err.message || 'Failed to load permissions');
+      setError(err.message || t('settings.agentPermissions.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -52,7 +54,7 @@ export function AgentPermissionsPage() {
       await dashboardApi.put('/permissions', permissions);
       // Trigger a reload or notification
     } catch (err: any) {
-      setError(err.message || 'Failed to save permissions');
+      setError(err.message || t('settings.agentPermissions.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -72,10 +74,10 @@ export function AgentPermissionsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Shield className="w-6 h-6 text-brand-600" />
-            Agent Permissions
+            {t('settings.agentPermissions.title')}
           </h1>
           <p className="text-slate-500 mt-1">
-            Configure which settings pages agents can access. Admins always have full access.
+            {t('settings.agentPermissions.subtitle')}
           </p>
         </div>
         <button
@@ -84,7 +86,7 @@ export function AgentPermissionsPage() {
           className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save Changes
+          {t('settings.agentPermissions.saveChanges')}
         </button>
       </div>
 
@@ -99,8 +101,8 @@ export function AgentPermissionsPage() {
         {SETTING_MODULES.map((module) => (
           <div key={module.key} className="p-6 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-slate-900">{module.name}</h3>
-              <p className="text-sm text-slate-500 mt-1">{module.description}</p>
+              <h3 className="text-sm font-medium text-slate-900">{t(module.nameKey)}</h3>
+              <p className="text-sm text-slate-500 mt-1">{t(module.descriptionKey)}</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input

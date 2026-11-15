@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi, ApiError } from '../api/client';
 import { CreditCard, Database, HardDrive, Cpu, Activity, AlertCircle, ExternalLink, RefreshCw, Zap } from 'lucide-react';
 import { UsageStats } from '@luminatick/shared';
@@ -29,6 +30,7 @@ function formatNumber(num: number) {
 }
 
 export function UsagePage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function UsagePage() {
       setData(response);
       setShowCredentialsForm(false);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to fetch usage data';
+      const errorMessage = err.message || t('usage.fetchFailed');
       if (errorMessage.includes('APP_MASTER_KEY is missing')) {
         setIsMasterKeyMissing(true);
       } else if (err instanceof ApiError && err.status === 400) {
@@ -67,7 +69,7 @@ export function UsagePage() {
 
   const saveCredentials = async () => {
     if (!accountId.trim() || (!apiToken.trim() && !isAuthError)) {
-      setError('Account ID is required');
+      setError(t('usage.accountIdRequired'));
       return;
     }
     
@@ -88,7 +90,7 @@ export function UsagePage() {
       await fetchUsage();
       setApiToken(''); // Clear sensitive token from state
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to save credentials';
+      const errorMessage = err.message || t('usage.saveFailed');
       if (errorMessage.includes('APP_MASTER_KEY is missing')) {
         setIsMasterKeyMissing(true);
       } else {
@@ -109,62 +111,62 @@ export function UsagePage() {
         <AlertCircle className={cn("w-8 h-8 shrink-0", isAuthError ? "text-orange-500" : "text-brand-500")} />
         <div>
           <h3 className={cn("text-lg font-semibold", isAuthError ? "text-orange-800" : "text-brand-800")}>
-            {isAuthError ? 'Cloudflare Credentials Required' : 'Update Cloudflare Credentials'}
+            {isAuthError ? t('usage.credentialsRequiredTitle') : t('usage.credentialsUpdateTitle')}
           </h3>
           <p className={cn("mt-1", isAuthError ? "text-orange-700" : "text-brand-700")}>
             {isAuthError 
-              ? 'To view your usage and costs, you need to provide your Cloudflare Account ID and an API Token with Account Analytics permissions.'
-              : 'Update your Cloudflare Account ID or Analytics API Token. Leave the token field blank to keep your existing encrypted token.'}
+              ? t('usage.credentialsRequiredDesc')
+              : t('usage.credentialsUpdateDesc')}
           </p>
           <p className={cn("mt-2 text-sm font-medium", isAuthError ? "text-orange-700" : "text-brand-700")}>
-            Note: Storing these credentials in the database allows anyone with Admin access to view them, but it makes setup easier.
+            {t('usage.credentialsNote')}
           </p>
         </div>
       </div>
       
       <div className="p-6 space-y-6 text-slate-600">
         <div>
-          <h4 className="font-medium text-slate-900 mb-2">1. How to get your API Token:</h4>
+          <h4 className="font-medium text-slate-900 mb-2">{t('usage.step1Title')}</h4>
           <ol className="list-decimal list-inside space-y-3">
             <li>
-              Go to your <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline inline-flex items-center gap-1">Cloudflare API Tokens <ExternalLink className="w-3 h-3" /></a> dashboard.
+              {t('usage.step1GoToPrefix')}<a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline inline-flex items-center gap-1">{t('usage.step1LinkText')} <ExternalLink className="w-3 h-3" /></a>{t('usage.step1GoToSuffix')}
             </li>
-            <li>Click <strong>Create Token</strong> and choose <strong>Create Custom Token</strong>.</li>
+            <li>{t('usage.step2Prefix')}<strong>{t('usage.step2CreateToken')}</strong>{t('usage.step2Middle')}<strong>{t('usage.step2CustomToken')}</strong>{t('usage.step2Suffix')}</li>
             <li>
-              Under Permissions, select:
+              {t('usage.step3Title')}
               <ul className="list-disc list-inside ml-6 mt-1 text-sm bg-slate-50 p-2 rounded border border-slate-100">
-                <li>Account <span className="mx-2 text-slate-400">→</span> Account Analytics <span className="mx-2 text-slate-400">→</span> Read</li>
+                <li>{t('usage.step3Account')} <span className="mx-2 text-slate-400">→</span> {t('usage.step3Analytics')} <span className="mx-2 text-slate-400">→</span> {t('usage.step3Read')}</li>
               </ul>
             </li>
-            <li>Under Account Resources, select your account.</li>
-            <li>Complete the creation and copy your new token.</li>
+            <li>{t('usage.step4')}</li>
+            <li>{t('usage.step5')}</li>
           </ol>
         </div>
 
         <div>
-          <h4 className="font-medium text-slate-900 mb-4">2. Enter your credentials:</h4>
+          <h4 className="font-medium text-slate-900 mb-4">{t('usage.step2Heading')}</h4>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Cloudflare Account ID
+                {t('usage.accountIdLabel')}
               </label>
               <input
                 type="text"
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                placeholder="e.g., 1234567890abcdef1234567890abcdef"
+                placeholder={t('usage.accountIdPlaceholder')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono text-sm"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Cloudflare API Token
+                {t('usage.apiTokenLabel')}
               </label>
               <input
                 type="password"
                 value={apiToken}
                 onChange={(e) => setApiToken(e.target.value)}
-                placeholder={isAuthError ? "Enter your API token" : "•••••••• (Leave blank to keep existing)"}
+                placeholder={isAuthError ? t('usage.apiTokenPlaceholderNew') : t('usage.apiTokenPlaceholderKeep')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono text-sm"
               />
             </div>
@@ -174,7 +176,7 @@ export function UsagePage() {
                 disabled={savingCredentials}
                 className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
               >
-                {savingCredentials ? 'Saving...' : 'Save & View Usage'}
+                {savingCredentials ? t('common.saving') : t('usage.saveAndView')}
               </button>
               {!isAuthError && (
                 <button 
@@ -182,7 +184,7 @@ export function UsagePage() {
                   disabled={savingCredentials}
                   className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               )}
             </div>
@@ -197,7 +199,7 @@ export function UsagePage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-4 text-slate-500">
           <RefreshCw className="w-8 h-8 animate-spin" />
-          <p>Loading usage data...</p>
+          <p>{t('usage.loading')}</p>
         </div>
       </div>
     );
@@ -209,25 +211,24 @@ export function UsagePage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-brand-600" />
-            Usage & Costs
+            {t('usage.title')}
           </h1>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex gap-4">
           <AlertCircle className="w-8 h-8 text-red-600 shrink-0" />
           <div>
-            <h3 className="text-lg font-semibold text-red-800">Critical: Missing Encryption Key</h3>
+            <h3 className="text-lg font-semibold text-red-800">{t('usage.masterKeyTitle')}</h3>
             <p className="text-red-700 mt-1">
-              Your server is missing the <code className="bg-red-100 px-1 py-0.5 rounded font-mono text-sm">APP_MASTER_KEY</code> environment variable. 
-              This 32-character key is required to securely encrypt and decrypt API tokens and other sensitive settings.
+              {t('usage.masterKeyBodyPrefix')}<code className="bg-red-100 px-1 py-0.5 rounded font-mono text-sm">APP_MASTER_KEY</code>{t('usage.masterKeyBodySuffix')} 
             </p>
             <p className="text-red-700 mt-2 font-medium text-sm">
-              Please ask your system administrator to add it to your server's environment configuration, then restart the application.
+              {t('usage.masterKeyInstruction')}
             </p>
             <button 
               onClick={fetchUsage}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
             >
-              Retry
+              {t('usage.retry')}
             </button>
           </div>
         </div>
@@ -241,17 +242,17 @@ export function UsagePage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-brand-600" />
-            Usage & Costs
+            {t('usage.title')}
           </h1>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700">
-          <p className="font-medium">Error loading usage data</p>
+          <p className="font-medium">{t('usage.errorTitle')}</p>
           <p className="text-sm mt-1">{error}</p>
           <button 
             onClick={fetchUsage}
             className="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors"
           >
-            Retry
+            {t('usage.retry')}
           </button>
         </div>
       </div>
@@ -264,10 +265,10 @@ export function UsagePage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-brand-600" />
-            Usage & Costs
+            {t('usage.title')}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Monitor your Cloudflare resource usage against Free Tier limits. Updates may be delayed by a few hours.
+            {t('usage.subtitle')}
           </p>
         </div>
         {!isAuthError && !showCredentialsForm && (
@@ -275,7 +276,7 @@ export function UsagePage() {
             onClick={() => setShowCredentialsForm(true)}
             className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
           >
-            Update Credentials
+            {t('usage.updateCredentials')}
           </button>
         )}
       </div>
@@ -285,12 +286,12 @@ export function UsagePage() {
       {!isAuthError && !showCredentialsForm && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <StatCard 
-            title="D1 Reads and Writes"
-            description="Database row operations"
+            title={t('usage.d1Title')}
+            description={t('usage.d1Desc')}
             icon={Database}
             current={(data?.d1?.rowsRead || 0) + (data?.d1?.rowsWritten || 0)}
             limit={LIMITS.d1_reads_writes}
-            unit="/ day"
+            unit={t('usage.unitDay')}
             format={formatNumber}
             colorClass="text-blue-600"
             bgClass="bg-blue-50"
@@ -298,12 +299,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="R2 Operations (Class A)"
-            description="Writes to storage"
+            title={t('usage.r2aTitle')}
+            description={t('usage.r2aDesc')}
             icon={HardDrive}
             current={data?.r2?.classAOperations || 0}
             limit={LIMITS.r2_class_a}
-            unit="/ month"
+            unit={t('usage.unitMonth')}
             format={formatNumber}
             colorClass="text-indigo-600"
             bgClass="bg-indigo-50"
@@ -311,12 +312,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="R2 Operations (Class B)"
-            description="Reads from storage"
+            title={t('usage.r2bTitle')}
+            description={t('usage.r2bDesc')}
             icon={HardDrive}
             current={data?.r2?.classBOperations || 0}
             limit={LIMITS.r2_class_b}
-            unit="/ month"
+            unit={t('usage.unitMonth')}
             format={formatNumber}
             colorClass="text-purple-600"
             bgClass="bg-purple-50"
@@ -324,12 +325,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="Workers Requests"
-            description="API calls, widget loads, pages"
+            title={t('usage.workersTitle')}
+            description={t('usage.workersDesc')}
             icon={Activity}
             current={data?.workers?.requests || 0}
             limit={LIMITS.worker_requests}
-            unit="/ day"
+            unit={t('usage.unitDay')}
             format={formatNumber}
             colorClass="text-emerald-600"
             bgClass="bg-emerald-50"
@@ -337,12 +338,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="Workers AI Neurons"
-            description="RAG, embedding, auto-responses"
+            title={t('usage.aiTitle')}
+            description={t('usage.aiDesc')}
             icon={Cpu}
             current={data?.workersAi?.neurons || 0}
             limit={LIMITS.ai_neurons}
-            unit="/ day"
+            unit={t('usage.unitDay')}
             format={formatNumber}
             colorClass="text-brand-600"
             bgClass="bg-brand-50"
@@ -350,12 +351,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="Durable Objects Requests"
-            description="Real-time presence connections"
+            title={t('usage.doTitle')}
+            description={t('usage.doDesc')}
             icon={Zap}
             current={data?.durableObjects?.requests || 0}
             limit={LIMITS.do_requests}
-            unit="/ day"
+            unit={t('usage.unitDay')}
             format={formatNumber}
             colorClass="text-amber-600"
             bgClass="bg-amber-50"
@@ -363,12 +364,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="Vectorize Queries"
-            description="Vector search queries"
+            title={t('usage.vqTitle')}
+            description={t('usage.vqDesc')}
             icon={Database}
             current={data?.vectorize?.queried || 0}
             limit={LIMITS.vectorize_queries}
-            unit="/ month"
+            unit={t('usage.unitMonth')}
             format={formatNumber}
             colorClass="text-pink-600"
             bgClass="bg-pink-50"
@@ -376,12 +377,12 @@ export function UsagePage() {
           />
 
           <StatCard 
-            title="Vectorize Writes"
-            description="Vector index updates"
+            title={t('usage.vwTitle')}
+            description={t('usage.vwDesc')}
             icon={Database}
             current={data?.vectorize?.written || 0}
             limit={LIMITS.vectorize_writes}
-            unit="/ month"
+            unit={t('usage.unitMonth')}
             format={formatNumber}
             colorClass="text-rose-600"
             bgClass="bg-rose-50"
@@ -407,6 +408,7 @@ interface StatCardProps {
 }
 
 function StatCard({ title, description, icon: Icon, current, limit, unit, format, colorClass, bgClass, fillClass }: StatCardProps) {
+  const { t } = useTranslation();
   const percentage = Math.min((current / limit) * 100, 100);
   const isNearLimit = percentage >= 80;
   const isOverLimit = percentage >= 100;
@@ -431,7 +433,7 @@ function StatCard({ title, description, icon: Icon, current, limit, unit, format
             {displayCurrent}
           </div>
           <div className="text-xs text-slate-500 font-medium">
-            of {displayLimit} {unit}
+            {t('usage.ofLimit', { limit: displayLimit, unit })}
           </div>
         </div>
       </div>
@@ -441,9 +443,9 @@ function StatCard({ title, description, icon: Icon, current, limit, unit, format
           <span className={cn(
             isOverLimit ? "text-red-600" : isNearLimit ? "text-orange-600" : "text-slate-600"
           )}>
-            {percentage.toFixed(1)}% Used
+            {t('usage.percentUsed', { percent: percentage.toFixed(1) })}
           </span>
-          <span className="text-slate-500">Free Tier Limit</span>
+          <span className="text-slate-500">{t('usage.freeTier')}</span>
         </div>
         <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
           <div 

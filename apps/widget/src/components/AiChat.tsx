@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { t } from '../i18n';
 
 interface Message {
   id: string;
@@ -16,7 +17,7 @@ const AiChat: React.FC<Props> = ({ config }) => {
     {
       id: '1',
       role: 'assistant',
-      content: config.welcomeMessage || "Hello! I'm here to help you. What's on your mind?",
+      content: config.welcomeMessage || t('aiWelcome'),
       timestamp: new Date()
     }
   ]);
@@ -78,7 +79,7 @@ const AiChat: React.FC<Props> = ({ config }) => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again or submit a ticket.",
+        content: t('aiError'),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -125,7 +126,7 @@ const AiChat: React.FC<Props> = ({ config }) => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question..."
+          placeholder={t('typeQuestion')}
           className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm"
           disabled={isLoading}
         />

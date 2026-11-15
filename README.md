@@ -1,5 +1,7 @@
 # Luminatick: Open-Source AI-First Ticketing System
 
+**[English](README.md) | [繁體中文](README.zh-TW.md)**
+
 [![CI](https://github.com/05ng/luminatick/actions/workflows/ci.yml/badge.svg)](https://github.com/05ng/luminatick/actions/workflows/ci.yml) [![CodeQL](https://github.com/05ng/luminatick/actions/workflows/codeql.yml/badge.svg)](https://github.com/05ng/luminatick/actions/workflows/codeql.yml)
 
 Luminatick is a decentralized, single-tenant ticketing system built specifically for the Cloudflare ecosystem. It leverages modern edge computing and AI to provide an efficient support experience via email, web forms, and interactive chat.

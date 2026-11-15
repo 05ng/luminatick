@@ -1,0 +1,65 @@
+{
+  "common": {
+    "loading": "載入中..."
+  },
+  "layout": {
+    "logout": "登出"
+  },
+  "login": {
+    "signInTitle": "登入客服中心",
+    "signInSubtitle": "輸入您的電子郵件以接收安全登入連結或驗證碼。",
+    "emailAddress": "電子郵件地址",
+    "loginMethod": "登入方式",
+    "magicLink": "魔術連結",
+    "codeOtp": "驗證碼（OTP）",
+    "sendMagicLink": "傳送魔術連結",
+    "sendCode": "傳送驗證碼",
+    "sending": "傳送中...",
+    "checkEmailTitle": "請檢查您的電子郵件",
+    "magicLinkSent": "我們已將魔術連結傳送至 {{email}}。",
+    "clickLinkToLogin": "請點擊郵件中的連結以登入。",
+    "otpSent": "驗證碼已傳送！正在前往驗證頁面...",
+    "requestFailed": "傳送登入連結失敗"
+  },
+  "verify": {
+    "verifyingTitle": "正在驗證您的登入...",
+    "enterCodeTitle": "輸入驗證碼",
+    "sentCodeTo": "我們已將 6 位數驗證碼傳送至 {{email}}",
+    "enterCodeDesc": "請輸入傳送至您電子郵件的 6 位數驗證碼",
+    "authCode": "驗證碼",
+    "verify": "驗證",
+    "verifying": "驗證中...",
+    "invalidCode": "驗證碼無效或已過期。",
+    "requestNewCode": "重新索取驗證碼"
+  },
+  "tickets": {
+    "yourTickets": "您的工單",
+    "newTicket": "新增工單",
+    "createNewTicket": "建立新工單",
+    "subject": "主旨",
+    "subjectPlaceholder": "您需要什麼協助？",
+    "message": "內容",
+    "messagePlaceholder": "請詳細描述您的問題...",
+    "cancel": "取消",
+    "create": "建立工單",
+    "createFailed": "建立工單失敗",
+    "loadFailed": "載入工單失敗",
+    "noTickets": "您尚未建立任何工單。",
+    "createdAgo": "建立於 {{time}}",
+    "priority": "優先順序：{{priority}}",
+    "securityCheckFailed": "安全性檢查失敗，請再試一次。",
+    "loadFailedDetail": "載入工單詳情失敗",
+    "notFound": "找不到工單",
+    "backToTickets": "返回工單列表",
+    "ticketLabel": "工單 {{no}}",
+    "createdAt": "建立於 {{date}}",
+    "you": "您",
+    "supportTeam": "客服團隊",
+    "attachment": "附件",
+    "replyPlaceholder": "在此輸入您的回覆...",
+    "attachFiles": "附加檔案",
+    "sendReply": "傳送回覆",
+    "sendReplyFailed": "傳送回覆失敗",
+    "closedNotice": "此工單狀態為 {{status}}，無法再回覆。"
+  }
+}

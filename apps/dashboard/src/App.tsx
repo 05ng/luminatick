@@ -95,6 +95,8 @@ export default function App() {
             <Route path="channels/widget" element={<WidgetChannelPage />} />
           </Route>
         </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

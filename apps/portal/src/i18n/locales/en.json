@@ -1,0 +1,65 @@
+{
+  "common": {
+    "loading": "Loading..."
+  },
+  "layout": {
+    "logout": "Log out"
+  },
+  "login": {
+    "signInTitle": "Sign in to Support",
+    "signInSubtitle": "Enter your email to receive a secure login link or code.",
+    "emailAddress": "Email address",
+    "loginMethod": "Login Method",
+    "magicLink": "Magic Link",
+    "codeOtp": "Code (OTP)",
+    "sendMagicLink": "Send Magic Link",
+    "sendCode": "Send Code",
+    "sending": "Sending...",
+    "checkEmailTitle": "Check your email",
+    "magicLinkSent": "We sent a magic link to {{email}}.",
+    "clickLinkToLogin": "Click the link in the email to log in.",
+    "otpSent": "OTP sent! Redirecting to verification...",
+    "requestFailed": "Failed to request login link"
+  },
+  "verify": {
+    "verifyingTitle": "Verifying your login...",
+    "enterCodeTitle": "Enter Verification Code",
+    "sentCodeTo": "We sent a 6-digit code to {{email}}",
+    "enterCodeDesc": "Enter the 6-digit code sent to your email",
+    "authCode": "Authentication Code",
+    "verify": "Verify Code",
+    "verifying": "Verifying...",
+    "invalidCode": "Invalid or expired login code.",
+    "requestNewCode": "Request a new code"
+  },
+  "tickets": {
+    "yourTickets": "Your Tickets",
+    "newTicket": "New Ticket",
+    "createNewTicket": "Create New Ticket",
+    "subject": "Subject",
+    "subjectPlaceholder": "What do you need help with?",
+    "message": "Message",
+    "messagePlaceholder": "Describe your issue in detail...",
+    "cancel": "Cancel",
+    "create": "Create Ticket",
+    "createFailed": "Failed to create ticket",
+    "loadFailed": "Failed to load tickets",
+    "noTickets": "You haven't created any tickets yet.",
+    "createdAgo": "Created {{time}}",
+    "priority": "Priority: {{priority}}",
+    "securityCheckFailed": "Security check failed. Please try again.",
+    "loadFailedDetail": "Failed to load ticket details",
+    "notFound": "Ticket not found",
+    "backToTickets": "Back to Tickets",
+    "ticketLabel": "Ticket {{no}}",
+    "createdAt": "Created {{date}}",
+    "you": "You",
+    "supportTeam": "Support Team",
+    "attachment": "Attachment",
+    "replyPlaceholder": "Type your reply here...",
+    "attachFiles": "Attach Files",
+    "sendReply": "Send Reply",
+    "sendReplyFailed": "Failed to send reply",
+    "closedNotice": "This ticket is {{status}}. You cannot reply to it."
+  }
+}

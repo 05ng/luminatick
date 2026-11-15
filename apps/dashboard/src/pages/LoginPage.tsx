@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { dashboardApi } from '../api/client';
 import { AuthResponse } from '../types';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
@@ -32,19 +35,20 @@ export function LoginPage() {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || t('login.invalidCredentials'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 relative">
+      <div className="absolute top-4 right-4"><LanguageSwitcher /></div>
       <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">L</div>
-          <h1 className="text-2xl font-bold text-slate-900">Welcome Back</h1>
-          <p className="text-slate-500 mt-1">Sign in to your Luminatick account</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('login.welcomeBack')}</h1>
+          <p className="text-slate-500 mt-1">{t('login.signInSubtitle')}</p>
         </div>
 
         {error && (
@@ -55,7 +59,7 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.emailAddress')}</label>
             <input
               type="email"
               required
@@ -66,7 +70,7 @@ export function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('login.password')}</label>
             <input
               type="password"
               required
@@ -81,7 +85,7 @@ export function LoginPage() {
             disabled={loading}
             className="btn btn-primary w-full h-11"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('login.signingIn') : t('login.signIn')}
           </button>
         </form>
       </div>

@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Ticket as TicketIcon, 
-  Users, 
+import { useTranslation } from 'react-i18next';
+import {
+  LayoutDashboard,
+  Ticket as TicketIcon,
+  Users,
   Key,
-  Settings, 
-  LogOut, 
+  Settings,
+  LogOut,
   Search,
   Book,
   Menu,
@@ -22,8 +23,10 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useRealtime } from '../../hooks/useRealtime';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
@@ -39,6 +42,7 @@ interface Toast {
 
 function UserMenu() {
   const { user, logout } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -80,14 +84,14 @@ function UserMenu() {
             className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
           >
             <Key className="w-4 h-4" />
-            Security Profile
+            {t('layout.securityProfile')}
           </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            Logout
+            {t('layout.logout')}
           </button>
         </div>
       )}
@@ -97,6 +101,7 @@ function UserMenu() {
 
 export function Layout() {
   const { user, logout } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -139,7 +144,7 @@ export function Layout() {
       const toast: Toast = {
         id: Math.random().toString(36).substring(2),
         type: lastMessage.type,
-        title: isCreated ? 'New Ticket' : 'Ticket Updated',
+        title: isCreated ? t('layout.newTicket') : t('layout.ticketUpdated'),
         message: lastMessage.payload.subject,
         ticketId: lastMessage.payload.id,
       };
@@ -151,7 +156,7 @@ export function Layout() {
         setToasts(prev => prev.filter(t => t.id !== toast.id));
       }, 8000);
     }
-  }, [lastMessage]);
+  }, [lastMessage, t]);
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -214,9 +219,9 @@ export function Layout() {
               const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href));
               return (
                 <Link
-                  key={item.name}
+                  key={item.nameKey}
                   to={item.href}
-                  title={item.name}
+                  title={t(`layout.${item.nameKey}`)}
                   className={cn(
                     "flex items-center justify-center w-full aspect-square rounded-xl transition-all group relative",
                     isActive 
@@ -233,7 +238,7 @@ export function Layout() {
           <div className="w-full px-2 space-y-2 mt-auto pb-4 border-t border-slate-800/50 pt-4 flex flex-col items-center relative">
             <Link
               to="/settings"
-              title="Settings"
+              title={t('layout.settings')}
               className={cn(
                 "flex items-center justify-center w-full aspect-square rounded-xl transition-all group relative",
                 location.pathname.startsWith('/settings')
@@ -263,7 +268,7 @@ export function Layout() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search tickets..." 
+              placeholder={t('layout.searchTickets')} 
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -281,6 +286,7 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-4 relative" ref={connDetailsRef}>
+            <LanguageSwitcher />
             <button 
               onClick={() => setShowConnDetails(!showConnDetails)}
               className={cn(
@@ -291,14 +297,14 @@ export function Layout() {
               )}
             >
               {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              <span>{isConnected ? 'Real-time' : 'Disconnected'}</span>
+              <span>{isConnected ? t('layout.realtime') : t('layout.disconnected')}</span>
               <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showConnDetails && "rotate-180")} />
             </button>
 
             {showConnDetails && (
               <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-4 z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-slate-900">Connection Status</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{t('layout.connectionStatus')}</h3>
                   <div className={cn(
                     "w-2 h-2 rounded-full",
                     isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500"
@@ -308,13 +314,13 @@ export function Layout() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500 flex items-center gap-1.5">
-                      <Activity className="w-3 h-3" /> Latency
+                      <Activity className="w-3 h-3" /> {t('layout.latency')}
                     </span>
                     <span className="font-mono text-slate-900">{connectionDetails.latency}ms</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500 flex items-center gap-1.5">
-                      <RefreshCw className="w-3 h-3" /> Reconnects
+                      <RefreshCw className="w-3 h-3" /> {t('layout.reconnects')}
                     </span>
                     <span className="font-mono text-slate-900">{connectionDetails.reconnectCount}</span>
                   </div>
@@ -329,7 +335,7 @@ export function Layout() {
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    Force Reconnect
+                    {t('layout.forceReconnect')}
                   </button>
                 </div>
               </div>
@@ -346,7 +352,7 @@ export function Layout() {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Filters', href: '/tickets', icon: TicketIcon },
-  { name: 'Knowledge Base', href: '/knowledge', icon: Book },
+  { nameKey: 'dashboard', href: '/', icon: LayoutDashboard },
+  { nameKey: 'filters', href: '/tickets', icon: TicketIcon },
+  { nameKey: 'knowledgeBase', href: '/knowledge', icon: Book },
 ];

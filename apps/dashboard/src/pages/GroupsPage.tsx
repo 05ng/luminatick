@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Users, 
   Plus, 
@@ -23,6 +24,7 @@ import { useAuthStore } from '../store/authStore';
 import { Group, User } from '../types';
 
 export const GroupsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuthStore();
   const isAdmin = currentUser?.role === 'admin';
   
@@ -54,16 +56,16 @@ export const GroupsPage: React.FC = () => {
   };
 
   const handleDeleteGroup = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this group? It must not have any active tickets.')) return;
+    if (!confirm(t('groups.confirmDelete'))) return;
     
     try {
       await deleteGroupMutation.mutateAsync(id);
     } catch (error: any) {
-      alert(error.message || 'Failed to delete group. Ensure no tickets are assigned to it.');
+      alert(error.message || t('groups.deleteFailed'));
     }
   };
 
-  if (isLoadingGroups) return <div className="p-8 text-center text-slate-500">Loading groups...</div>;
+  if (isLoadingGroups) return <div className="p-8 text-center text-slate-500">{t('groups.loading')}</div>;
 
   const managingGroup = groups?.find(g => g.id === managingGroupId);
 
@@ -71,8 +73,8 @@ export const GroupsPage: React.FC = () => {
     <div className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Group Management</h1>
-          <p className="text-slate-500 mt-1">Organize agents into teams to handle specific ticket categories.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('groups.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('groups.subtitle')}</p>
         </div>
         {isAdmin && (
           <button 
@@ -80,7 +82,7 @@ export const GroupsPage: React.FC = () => {
             className="bg-brand-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Create Group
+            {t('groups.createGroup')}
           </button>
         )}
       </div>
@@ -88,28 +90,28 @@ export const GroupsPage: React.FC = () => {
       {isCreating && (
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-8 animate-in fade-in slide-in-from-top-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-slate-900">New Support Group</h2>
+            <h2 className="text-lg font-bold text-slate-900">{t('groups.newGroup')}</h2>
             <button onClick={() => setIsCreating(false)} className="text-slate-400 hover:text-slate-600">
               <X size={20} />
             </button>
           </div>
           <form onSubmit={handleCreateGroup} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Group Name</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('groups.name')}</label>
               <input
                 type="text"
                 required
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                placeholder="e.g., Technical Support"
+                placeholder={t('groups.namePlaceholder')}
                 value={newGroupName}
                 onChange={e => setNewGroupName(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Description (Optional)</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('groups.description')}</label>
               <textarea
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-                placeholder="Briefly describe what this group handles..."
+                placeholder={t('groups.descriptionPlaceholder')}
                 rows={2}
                 value={newGroupDescription}
                 onChange={e => setNewGroupDescription(e.target.value)}
@@ -121,14 +123,14 @@ export const GroupsPage: React.FC = () => {
                 onClick={() => setIsCreating(false)}
                 className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={createGroupMutation.isPending}
                 className="bg-brand-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-brand-700 transition-colors disabled:opacity-50"
               >
-                {createGroupMutation.isPending ? 'Creating...' : 'Create Group'}
+                {createGroupMutation.isPending ? t('groups.creating') : t('groups.createGroup')}
               </button>
             </div>
           </form>
@@ -139,17 +141,17 @@ export const GroupsPage: React.FC = () => {
         <table className="w-full text-left">
           <thead>
             <tr className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-              <th className="px-6 py-4">Group Name</th>
-              <th className="px-6 py-4">Description</th>
-              <th className="px-6 py-4">Created</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-6 py-4">{t('groups.name')}</th>
+              <th className="px-6 py-4">{t('groups.descriptionShort')}</th>
+              <th className="px-6 py-4">{t('groups.created')}</th>
+              <th className="px-6 py-4 text-right">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
             {groups?.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
-                  No groups found. Create one to start organizing your team.
+                  {t('groups.empty')}
                 </td>
               </tr>
             ) : (
@@ -166,13 +168,13 @@ export const GroupsPage: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-brand-600 hover:bg-brand-50 rounded-lg transition-colors border border-brand-200"
                     >
                       <Users className="w-3.5 h-3.5" />
-                      Members
+                      {t('groups.members')}
                     </button>
                     {isAdmin && (
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Group"
+                        title={t('groups.deleteGroup')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -203,6 +205,7 @@ interface ManageMembersModalProps {
 }
 
 const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose, isAdmin }) => {
+  const { t } = useTranslation();
   const { data: members, isLoading: isLoadingMembers } = useGroupMembers(group.id);
   const { data: agents } = useAgents();
   const addMemberMutation = useAddMember();
@@ -214,16 +217,16 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
     try {
       await addMemberMutation.mutateAsync({ groupId: group.id, userId });
     } catch (error: any) {
-      alert(error.message || 'Failed to add member');
+      alert(error.message || t('groups.addFailed'));
     }
   };
 
   const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Remove this member from the group?')) return;
+    if (!confirm(t('groups.confirmRemove'))) return;
     try {
       await removeMemberMutation.mutateAsync({ groupId: group.id, userId });
     } catch (error: any) {
-      alert(error.message || 'Failed to remove member');
+      alert(error.message || t('groups.removeFailed'));
     }
   };
 
@@ -238,8 +241,8 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Manage Members: {group.name}</h2>
-            <p className="text-sm text-slate-500">Add or remove agents from this group.</p>
+            <h2 className="text-xl font-bold text-slate-900">{t('groups.manageTitle', { name: group.name })}</h2>
+            <p className="text-sm text-slate-500">{t('groups.manageSubtitle')}</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
             <X size={24} />
@@ -249,13 +252,13 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
         <div className="flex-1 overflow-auto p-6 space-y-6">
           {/* Current Members Section */}
           <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Current Members ({members?.length || 0})</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t('groups.currentMembers', { count: members?.length || 0 })}</h3>
             <div className="space-y-2">
               {isLoadingMembers ? (
-                <div className="text-center py-4 text-slate-400 italic">Loading members...</div>
+                <div className="text-center py-4 text-slate-400 italic">{t('groups.loadingMembers')}</div>
               ) : members?.length === 0 ? (
                 <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-500 italic">
-                  No members assigned yet.
+                  {t('groups.noMembers')}
                 </div>
               ) : (
                 members?.map(member => (
@@ -266,7 +269,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
                       </div>
                       <div>
                         <div className="font-bold text-slate-900 flex items-center gap-2">
-                          {member.full_name || 'Unnamed'}
+                          {member.full_name || t('groups.unnamed')}
                           {member.role === 'admin' && <Shield className="w-3 h-3 text-purple-500" />}
                         </div>
                         <div className="text-xs text-slate-500 flex items-center gap-1">
@@ -279,7 +282,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
                       <button 
                         onClick={() => handleRemoveMember(member.id)}
                         className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        title="Remove member"
+                        title={t('groups.removeMember')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -293,12 +296,12 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
           {/* Add New Member Section (Admin Only) */}
           {isAdmin && (
             <div className="pt-6 border-t border-slate-100">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Add Agent</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t('groups.addAgent')}</h3>
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search agents by name or email..." 
+                  placeholder={t('groups.searchPlaceholder')} 
                   className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-brand-500 transition-all focus:bg-white border-transparent"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
@@ -317,7 +320,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
                         {agent.full_name?.[0] || agent.email[0].toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-slate-800">{agent.full_name || 'Unnamed'}</div>
+                        <div className="text-sm font-semibold text-slate-800">{agent.full_name || t('groups.unnamed')}</div>
                         <div className="text-[11px] text-slate-500">{agent.email}</div>
                       </div>
                     </div>
@@ -325,10 +328,10 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
                   </button>
                 ))}
                 {availableAgents?.length === 0 && searchTerm && (
-                  <div className="text-center py-4 text-slate-400 text-sm italic">No matching agents found.</div>
+                  <div className="text-center py-4 text-slate-400 text-sm italic">{t('groups.noMatchingAgents')}</div>
                 )}
                 {availableAgents?.length === 0 && !searchTerm && (
-                  <div className="text-center py-4 text-slate-400 text-sm italic">All available agents are already in this group.</div>
+                  <div className="text-center py-4 text-slate-400 text-sm italic">{t('groups.allAgentsAssigned')}</div>
                 )}
               </div>
             </div>
@@ -340,7 +343,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({ group, onClose,
             onClick={onClose}
             className="px-6 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
-            Done
+            {t('groups.done')}
           </button>
         </div>
       </div>

@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUsers } from '../hooks/useUsers';
 import { User } from '../types';
 import { User as UserIcon, Shield, Mail, Calendar, ShieldCheck, X, Activity, Settings } from 'lucide-react';
 
 export const UsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data: users = [], isLoading, error } = useUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [modalType, setModalType] = useState<'edit' | 'activity' | null>(null);
 
-  if (isLoading) return <div className="p-8 text-center text-slate-500 italic">Loading team members...</div>;
+  if (isLoading) return <div className="p-8 text-center text-slate-500 italic">{t('users.loading')}</div>;
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Team Management</h1>
-          <p className="text-slate-500 mt-1">Manage agents, admins, and their access levels.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('users.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('users.subtitle')}</p>
         </div>
         <button className="bg-brand-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-brand-700 transition-colors shadow-sm">
-          Invite New User
+          {t('users.invite')}
         </button>
       </div>
 
@@ -39,11 +41,11 @@ export const UsersPage: React.FC = () => {
                 user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 
                 user.role === 'agent' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
               }`}>
-                {user.role}
+                {t(`role.${user.role}`, user.role)}
               </span>
             </div>
             
-            <h3 className="text-lg font-bold text-slate-900">{user.full_name || 'Unnamed User'}</h3>
+            <h3 className="text-lg font-bold text-slate-900">{user.full_name || t('users.unnamed')}</h3>
             <div className="space-y-2 mt-4">
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Mail className="w-4 h-4" />
@@ -51,18 +53,18 @@ export const UsersPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Calendar className="w-4 h-4" />
-                Joined {new Date(user.created_at).toLocaleDateString()}
+                {t('users.joined', { date: new Date(user.created_at).toLocaleDateString() })}
               </div>
               <div className="flex items-center gap-2 text-sm">
                 {user.mfa_enabled ? (
                   <span className="text-green-600 flex items-center gap-1.5 font-medium">
                     <ShieldCheck className="w-4 h-4" />
-                    MFA Enabled
+                    {t('users.mfaEnabled')}
                   </span>
                 ) : (
                   <span className="text-slate-400 flex items-center gap-1.5">
                     <Shield className="w-4 h-4" />
-                    MFA Disabled
+                    {t('users.mfaDisabled')}
                   </span>
                 )}
               </div>
@@ -73,13 +75,13 @@ export const UsersPage: React.FC = () => {
                 onClick={() => { setSelectedUser(user); setModalType('edit'); }}
                 className="flex-1 text-xs font-bold text-slate-600 hover:bg-slate-50 py-2 rounded-lg border border-slate-200 transition-colors"
               >
-                Edit Profile
+                {t('users.editProfile')}
               </button>
               <button 
                 onClick={() => { setSelectedUser(user); setModalType('activity'); }}
                 className="flex-1 text-xs font-bold text-slate-600 hover:bg-slate-50 py-2 rounded-lg border border-slate-200 transition-colors"
               >
-                View Activity
+                {t('users.viewActivity')}
               </button>
             </div>
           </div>
@@ -87,8 +89,8 @@ export const UsersPage: React.FC = () => {
         {users.length === 0 && (
           <div className="col-span-full py-12 text-center bg-white rounded-xl border-2 border-dashed border-slate-200">
             <UserIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">No team members found</h3>
-            <p className="text-slate-500 mt-1">Start by inviting your first agent or admin.</p>
+            <h3 className="text-lg font-medium text-slate-900">{t('users.empty')}</h3>
+            <p className="text-slate-500 mt-1">{t('users.emptyHint')}</p>
           </div>
         )}
       </div>
@@ -98,7 +100,7 @@ export const UsersPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {modalType === 'edit' ? 'Edit User Profile' : 'User Activity Log'}
+                {modalType === 'edit' ? t('users.editTitle') : t('users.activityTitle')}
               </h2>
               <button onClick={() => { setSelectedUser(null); setModalType(null); }} className="text-slate-400 hover:text-slate-600">
                 <X className="w-6 h-6" />
@@ -110,7 +112,7 @@ export const UsersPage: React.FC = () => {
                   {(selectedUser.full_name || selectedUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{selectedUser.full_name || 'Unnamed User'}</h3>
+                  <h3 className="font-bold text-slate-900">{selectedUser.full_name || t('users.unnamed')}</h3>
                   <p className="text-sm text-slate-500">{selectedUser.email}</p>
                 </div>
               </div>
@@ -118,28 +120,28 @@ export const UsersPage: React.FC = () => {
               {modalType === 'edit' ? (
                 <div className="text-center py-6">
                   <Settings className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-600 font-medium">User profile editing is currently read-only.</p>
-                  <p className="text-sm text-slate-500 mt-1">In this version, users must update their own profiles via the security settings.</p>
+                  <p className="text-slate-600 font-medium">{t('users.readOnly')}</p>
+                  <p className="text-sm text-slate-500 mt-1">{t('users.readOnlyHint')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-brand-500 mt-1.5" />
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Logged in from new IP</p>
-                      <p className="text-xs text-slate-500">2 hours ago • 192.168.1.45</p>
+                      <p className="text-sm font-medium text-slate-900">{t('users.activity.login')}</p>
+                      <p className="text-xs text-slate-500">{t('users.activity.loginTime')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-slate-300 mt-1.5" />
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Resolved Ticket #000124</p>
-                      <p className="text-xs text-slate-500">Yesterday • 4:30 PM</p>
+                      <p className="text-sm font-medium text-slate-900">{t('users.activity.resolvedTicket')}</p>
+                      <p className="text-xs text-slate-500">{t('users.activity.resolvedTime')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 opacity-50">
                     <Activity className="w-4 h-4 text-slate-400" />
-                    <p className="text-xs italic text-slate-500">Viewing last 30 days of activity...</p>
+                    <p className="text-xs italic text-slate-500">{t('users.activity.viewing')}</p>
                   </div>
                 </div>
               )}
@@ -149,7 +151,7 @@ export const UsersPage: React.FC = () => {
                 onClick={() => { setSelectedUser(null); setModalType(null); }}
                 className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
           </div>

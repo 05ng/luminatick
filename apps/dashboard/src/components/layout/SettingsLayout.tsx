@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Settings, Users, Shield, Zap, Key, LayoutTemplate, FormInput, Mail, CreditCard } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -11,23 +12,24 @@ function cn(...inputs: any[]) {
 }
 
 const settingsNavigation = [
-  { name: 'General', href: '/settings/general', icon: Settings, permissionKey: 'general' },
-  { name: 'Users', href: '/settings/users', icon: Users, permissionKey: 'users' },
-  { name: 'Groups', href: '/settings/groups', icon: Shield, permissionKey: 'groups' },
-  { name: 'Ticket Fields', href: '/settings/ticket-fields', icon: FormInput, permissionKey: 'ticket_fields' },
-  { name: 'Filters', href: '/settings/filters', icon: LayoutTemplate, permissionKey: 'filters' },
-  { name: 'Automations', href: '/settings/automations', icon: Zap, permissionKey: 'automations' },
-  { name: 'API Keys', href: '/settings/api-keys', icon: Key, permissionKey: 'api_keys' },
-  { name: 'Usage & Costs', href: '/settings/usage', icon: CreditCard, permissionKey: 'usage' },
+  { nameKey: 'general', href: '/settings/general', icon: Settings, permissionKey: 'general' },
+  { nameKey: 'users', href: '/settings/users', icon: Users, permissionKey: 'users' },
+  { nameKey: 'groups', href: '/settings/groups', icon: Shield, permissionKey: 'groups' },
+  { nameKey: 'ticketFields', href: '/settings/ticket-fields', icon: FormInput, permissionKey: 'ticket_fields' },
+  { nameKey: 'filters', href: '/settings/filters', icon: LayoutTemplate, permissionKey: 'filters' },
+  { nameKey: 'automations', href: '/settings/automations', icon: Zap, permissionKey: 'automations' },
+  { nameKey: 'apiKeys', href: '/settings/api-keys', icon: Key, permissionKey: 'api_keys' },
+  { nameKey: 'usageCosts', href: '/settings/usage', icon: CreditCard, permissionKey: 'usage' },
 ];
 
 const channelsNavigation = [
-  { name: 'Email', href: '/settings/channels/email', icon: Mail, permissionKey: 'channels_email' },
-  { name: 'Widget', href: '/settings/channels/widget', icon: LayoutTemplate, permissionKey: 'channels_widget' },
+  { nameKey: 'email', href: '/settings/channels/email', icon: Mail, permissionKey: 'channels_email' },
+  { nameKey: 'widget', href: '/settings/channels/widget', icon: LayoutTemplate, permissionKey: 'channels_widget' },
 ];
 
 export function SettingsLayout() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -49,11 +51,11 @@ export function SettingsLayout() {
       {/* Sub-sidebar */}
       <div className="w-64 bg-white border-r border-slate-200 h-full overflow-y-auto shrink-0 hidden md:block">
         <div className="p-4">
-          <h2 className="text-lg font-bold text-slate-900 mb-4 px-2">Settings</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4 px-2">{t('settingsNav.settings')}</h2>
           <nav className="space-y-1">
             {filteredSettingsNav.map((item) => (
               <NavLink
-                key={item.name}
+                key={item.nameKey}
                 to={item.href}
                 className={({ isActive }) =>
                   cn(
@@ -65,7 +67,7 @@ export function SettingsLayout() {
                 }
               >
                 <item.icon className="w-4 h-4" />
-                {item.name}
+                {t(`settingsNav.${item.nameKey}`)}
               </NavLink>
             ))}
             
@@ -82,7 +84,7 @@ export function SettingsLayout() {
                 }
               >
                 <Shield className="w-4 h-4" />
-                Agent Permissions
+                {t('settingsNav.agentPermissions')}
               </NavLink>
             )}
           </nav>
@@ -90,12 +92,12 @@ export function SettingsLayout() {
           {filteredChannelsNav.length > 0 && (
             <>
               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-8 mb-3 px-2">
-                Channels
+                {t('settingsNav.channels')}
               </h3>
               <nav className="space-y-1">
                 {filteredChannelsNav.map((item) => (
                   <NavLink
-                    key={item.name}
+                    key={item.nameKey}
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
@@ -107,7 +109,7 @@ export function SettingsLayout() {
                     }
                   >
                     <item.icon className="w-4 h-4" />
-                    {item.name}
+                    {t(`settingsNav.${item.nameKey}`)}
                   </NavLink>
                 ))}
               </nav>

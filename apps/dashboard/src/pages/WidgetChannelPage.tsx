@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function WidgetChannelPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: config, isLoading } = useQuery({
@@ -26,10 +28,10 @@ export function WidgetChannelPage() {
       dashboardApi.put('/settings', updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      alert('Settings saved successfully!');
+      alert(t('settings.widget.savedSuccess'));
     },
     onError: () => {
-      alert('Failed to save settings');
+      alert(t('settings.widget.saveFailed'));
     }
   });
 
@@ -54,16 +56,16 @@ export function WidgetChannelPage() {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Widget Channel</h1>
-        <p className="text-slate-500 mt-1">Configure your embeddable customer support widget.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('settings.widget.title')}</h1>
+        <p className="text-slate-500 mt-1">{t('settings.widget.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h2 className="text-lg font-semibold border-b pb-2 text-slate-900">Features</h2>
+          <h2 className="text-lg font-semibold border-b pb-2 text-slate-900">{t('settings.widget.features')}</h2>
           
           {isLoading ? (
-            <div className="text-slate-500">Loading settings...</div>
+            <div className="text-slate-500">{t('settings.widget.loading')}</div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -78,10 +80,10 @@ export function WidgetChannelPage() {
                 </div>
                 <div className="flex-1">
                   <label htmlFor="chatEnabled" className="text-sm font-medium text-slate-900">
-                    Chat Enabled
+                    {t('settings.widget.chatEnabled')}
                   </label>
                   <p className="text-xs text-slate-500">
-                    Allow customers to chat with the AI support agent.
+                    {t('settings.widget.chatEnabledHint')}
                   </p>
                 </div>
               </div>
@@ -98,10 +100,10 @@ export function WidgetChannelPage() {
                 </div>
                 <div className="flex-1">
                   <label htmlFor="formEnabled" className="text-sm font-medium text-slate-900">
-                    Web Form Enabled
+                    {t('settings.widget.formEnabled')}
                   </label>
                   <p className="text-xs text-slate-500">
-                    Allow customers to submit a ticket via a form.
+                    {t('settings.widget.formEnabledHint')}
                   </p>
                 </div>
               </div>
@@ -113,15 +115,15 @@ export function WidgetChannelPage() {
             disabled={isSaving || isLoading}
             className="w-full bg-brand-600 text-white py-2 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? t('common.saving') : t('settings.widget.saveChanges')}
           </button>
         </div>
 
         <div className="space-y-6">
           <div className="bg-slate-900 text-white p-6 rounded-xl shadow-sm border border-slate-800">
-            <h2 className="text-lg font-semibold mb-4 text-indigo-400">Embed Snippet</h2>
+            <h2 className="text-lg font-semibold mb-4 text-indigo-400">{t('settings.widget.embedSnippet')}</h2>
             <p className="text-sm text-slate-400 mb-4">
-              Copy and paste this code before the closing <code>&lt;/body&gt;</code> tag of your website.
+              {t('settings.widget.embedSnippetPrefix')} <code>&lt;/body&gt;</code> {t('settings.widget.embedSnippetSuffix')}
             </p>
             <pre className="bg-black/50 p-4 rounded-lg text-xs overflow-x-auto text-emerald-400 border border-white/10 whitespace-pre">
               {snippet}
@@ -129,18 +131,18 @@ export function WidgetChannelPage() {
             <button
               onClick={() => {
                 navigator.clipboard.writeText(snippet);
-                alert('Snippet copied to clipboard!');
+                alert(t('settings.widget.snippetCopied'));
               }}
               className="mt-4 w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-sm font-medium transition-colors"
             >
-              Copy Snippet
+              {t('settings.widget.copySnippet')}
             </button>
           </div>
 
           <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-xl">
-            <h2 className="text-lg font-semibold text-indigo-900 mb-2">Shadow DOM</h2>
+            <h2 className="text-lg font-semibold text-indigo-900 mb-2">{t('settings.widget.shadowDom')}</h2>
             <p className="text-sm text-indigo-800">
-              The Luminatick widget uses Shadow DOM technology. This means its styles are completely isolated and won't conflict with your website's CSS framework (like Bootstrap, Tailwind, or custom styles).
+              {t('settings.widget.shadowDomHint')}
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../api/client';
 import { KnowledgeCategory, KnowledgeDoc } from '../types';
 import { Plus, Folder, FileText, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
@@ -23,6 +24,7 @@ export const KnowledgePage: React.FC = () => {
     title: string;
   }>({ isOpen: false, type: null, id: null, title: '' });
 
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -85,7 +87,7 @@ export const KnowledgePage: React.FC = () => {
       isOpen: true,
       type: 'category',
       id,
-      title: `Are you sure you want to delete the category "${name}"?`
+      title: t('knowledge.confirmDeleteCategory', { name })
     });
   };
 
@@ -95,7 +97,7 @@ export const KnowledgePage: React.FC = () => {
       isOpen: true,
       type: 'document',
       id,
-      title: `Are you sure you want to delete the document "${title}"?`
+      title: t('knowledge.confirmDeleteDocument', { title })
     });
   };
 
@@ -163,7 +165,7 @@ export const KnowledgePage: React.FC = () => {
                 setExpandedCategories(prev => new Set(prev).add(node.id));
               }}
               className="p-1 hover:bg-gray-200 rounded text-gray-500"
-              title="Add Subcategory"
+              title={t('knowledge.addSubcategory')}
             >
               <Plus size={14} />
             </button>
@@ -173,7 +175,7 @@ export const KnowledgePage: React.FC = () => {
                 confirmDeleteCategory(node.id, node.name);
               }}
               className="p-1 hover:bg-red-100 rounded text-red-500"
-              title="Delete Category"
+              title={t('knowledge.deleteCategory')}
             >
               <Trash2 size={14} />
             </button>
@@ -202,7 +204,7 @@ export const KnowledgePage: React.FC = () => {
               }}
               onBlur={() => handleAddCategory(node.id)}
               className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 px-2 w-full"
-              placeholder="New category..."
+              placeholder={t('knowledge.newCategoryPlaceholder')}
             />
           </div>
         )}
@@ -217,13 +219,13 @@ export const KnowledgePage: React.FC = () => {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50">
       <div className="flex-none px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Knowledge Base</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('knowledge.title')}</h1>
         <button
           onClick={() => navigate('/knowledge/new' + (selectedCategoryId ? `?categoryId=${selectedCategoryId}` : ''))}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
         >
           <Plus size={16} className="mr-2" />
-          New Article
+          {t('knowledge.newArticle')}
         </button>
       </div>
 
@@ -237,11 +239,11 @@ export const KnowledgePage: React.FC = () => {
         {/* Sidebar */}
         <div className="w-72 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Categories</h2>
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('knowledge.categories')}</h2>
             <button
               onClick={() => setIsAddingCategory({ parentId: null })}
               className="p-1 hover:bg-gray-100 rounded-md text-gray-500"
-              title="Add Root Category"
+              title={t('knowledge.addRootCategory')}
             >
               <Plus size={16} />
             </button>
@@ -255,7 +257,7 @@ export const KnowledgePage: React.FC = () => {
               onClick={() => setSelectedCategoryId(null)}
             >
               <FileText size={16} className="mr-2 text-gray-400" />
-              <span className="text-sm font-medium">All Articles</span>
+              <span className="text-sm font-medium">{t('knowledge.allArticles')}</span>
             </div>
             
             <div className="space-y-1">
@@ -274,7 +276,7 @@ export const KnowledgePage: React.FC = () => {
                     }}
                     onBlur={() => handleAddCategory(null)}
                     className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 px-2 w-full"
-                    placeholder="New category..."
+                    placeholder={t('knowledge.newCategoryPlaceholder')}
                   />
                 </div>
               )}
@@ -288,11 +290,11 @@ export const KnowledgePage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('knowledge.colTitle')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('knowledge.colTier')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('knowledge.colCreated')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -308,14 +310,14 @@ export const KnowledgePage: React.FC = () => {
                         doc.status === 'active' ? 'bg-green-100 text-green-800' : 
                         doc.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {doc.status}
+                        {t(`knowledge.status.${doc.status}`, doc.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         doc.tier === 'sop' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {doc.tier === 'sop' ? 'SOP' : 'Answer'}
+                        {doc.tier === 'sop' ? t('knowledge.tierSop') : t('knowledge.tierAnswer')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -325,17 +327,13 @@ export const KnowledgePage: React.FC = () => {
                       <button
                         onClick={(e) => confirmDeleteDoc(doc.id, doc.title, e)}
                         className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
+                      >{t('common.delete')}</button>
                     </td>
                   </tr>
                 ))}
                 {filteredDocs.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
-                      No articles found in this category.
-                    </td>
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">{t('knowledge.noArticles')}</td>
                   </tr>
                 )}
               </tbody>
@@ -347,21 +345,17 @@ export const KnowledgePage: React.FC = () => {
       {deleteConfirm.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('knowledge.confirmDeletion')}</h3>
             <p className="text-sm text-gray-500 mb-6">{deleteConfirm.title}</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setDeleteConfirm({ isOpen: false, type: null, id: null, title: '' })}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Cancel
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={executeDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Delete
-              </button>
+              >{t('common.delete')}</button>
             </div>
           </div>
         </div>

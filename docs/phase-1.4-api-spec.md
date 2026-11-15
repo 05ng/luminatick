@@ -1,5 +1,7 @@
 # Phase 1.4: External Ticket API & API Key Management
 
+**[English](phase-1.4-api-spec.md) | [繁體中文](zh-TW/phase-1.4-api-spec.md)**
+
 ## Overview
 This phase introduces a public REST API (`/api/v1/`) that allows third-party systems to interact with Luminatick. Access is controlled via API Keys, which can be managed by administrators in the dashboard.
 

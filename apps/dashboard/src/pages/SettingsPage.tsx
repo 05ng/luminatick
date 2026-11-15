@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings';
 import { Building2, Settings as SettingsIcon, Mail, Save, Loader2, Cloud, AlertCircle, Shield, Activity } from 'lucide-react';
 import { ApiError } from '../api/client';
 
 export const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data: settings, isLoading, error: fetchError } = useSettings();
   const updateSettings = useUpdateSettings();
 
@@ -108,8 +110,8 @@ export const SettingsPage: React.FC = () => {
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">General Settings</h1>
-          <p className="text-slate-500 mt-0.5">Manage your organization and system defaults.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('settings.general.title')}</h1>
+          <p className="text-slate-500 mt-0.5">{t('settings.general.subtitle')}</p>
         </div>
         <button
           onClick={handleSubmit}
@@ -121,7 +123,7 @@ export const SettingsPage: React.FC = () => {
           ) : (
             <Save className="w-5 h-5" />
           )}
-          Save Changes
+          {t('settings.general.saveChanges')}
         </button>
       </div>
 
@@ -129,16 +131,17 @@ export const SettingsPage: React.FC = () => {
         <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-6 flex gap-4">
           <AlertCircle className="w-8 h-8 text-red-600 shrink-0" />
           <div>
-            <h3 className="text-lg font-semibold text-red-800">Critical: Missing Encryption Key</h3>
+            <h3 className="text-lg font-semibold text-red-800">{t('settings.general.masterKey.title')}</h3>
             <p className="text-red-700 mt-1">
-              Your server is missing the <code className="bg-red-100 px-1 py-0.5 rounded font-mono text-sm">APP_MASTER_KEY</code> environment variable. 
-              This 32-character key is required to securely encrypt and decrypt API tokens and other sensitive settings.
+              {t('settings.general.masterKey.bodyPrefix')}{' '}
+              <code className="bg-red-100 px-1 py-0.5 rounded font-mono text-sm">APP_MASTER_KEY</code>{' '}
+              {t('settings.general.masterKey.bodySuffix')}
             </p>
             <p className="text-red-700 mt-2 font-medium text-sm">
-              Please ask your system administrator to add it to your server's environment configuration, then restart the application.
+              {t('settings.general.masterKey.instruction')}
             </p>
             <p className="text-red-700 mt-2 font-medium text-xs opacity-80">
-              Details: {masterKeyError}
+              {t('settings.general.masterKey.details', { message: masterKeyError })}
             </p>
           </div>
         </div>
@@ -149,12 +152,12 @@ export const SettingsPage: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
             <Building2 className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Organization Profile</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('settings.general.organization.title')}</h2>
           </div>
           <div className="p-6 space-y-4">
             <div>
               <label htmlFor="COMPANY_NAME" className="block text-sm font-medium text-slate-700 mb-1">
-                Company Name
+                {t('settings.general.organization.companyName')}
               </label>
               <input
                 type="text"
@@ -164,12 +167,12 @@ export const SettingsPage: React.FC = () => {
                 onChange={handleChange}
                 maxLength={100}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. Acme Corp"
+                placeholder={t('settings.general.organization.companyNamePlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="PORTAL_URL" className="block text-sm font-medium text-slate-700 mb-1">
-                Portal URL
+                {t('settings.general.organization.portalUrl')}
               </label>
               <input
                 type="url"
@@ -179,7 +182,7 @@ export const SettingsPage: React.FC = () => {
                 onChange={handleChange}
                 maxLength={200}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. https://support.acme.com"
+                placeholder={t('settings.general.organization.portalUrlPlaceholder')}
               />
             </div>
           </div>
@@ -189,12 +192,12 @@ export const SettingsPage: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
             <SettingsIcon className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">System Defaults</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('settings.general.defaults.title')}</h2>
           </div>
           <div className="p-6 space-y-4">
             <div>
               <label htmlFor="SYSTEM_TIMEZONE" className="block text-sm font-medium text-slate-700 mb-1">
-                System Timezone
+                {t('settings.general.defaults.timezone')}
               </label>
               <select
                 id="SYSTEM_TIMEZONE"
@@ -203,21 +206,21 @@ export const SettingsPage: React.FC = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
               >
-                <option value="UTC">UTC</option>
-                <option value="America/New_York">Eastern Time (ET)</option>
-                <option value="America/Chicago">Central Time (CT)</option>
-                <option value="America/Denver">Mountain Time (MT)</option>
-                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                <option value="Europe/London">London (GMT)</option>
-                <option value="Europe/Paris">Central Europe (CET)</option>
-                <option value="Asia/Tokyo">Tokyo (JST)</option>
-                <option value="Australia/Sydney">Sydney (AEST)</option>
+                <option value="UTC">{t('settings.general.timezone.utc')}</option>
+                <option value="America/New_York">{t('settings.general.timezone.eastern')}</option>
+                <option value="America/Chicago">{t('settings.general.timezone.central')}</option>
+                <option value="America/Denver">{t('settings.general.timezone.mountain')}</option>
+                <option value="America/Los_Angeles">{t('settings.general.timezone.pacific')}</option>
+                <option value="Europe/London">{t('settings.general.timezone.london')}</option>
+                <option value="Europe/Paris">{t('settings.general.timezone.centralEurope')}</option>
+                <option value="Asia/Tokyo">{t('settings.general.timezone.tokyo')}</option>
+                <option value="Australia/Sydney">{t('settings.general.timezone.sydney')}</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="TICKET_PREFIX" className="block text-sm font-medium text-slate-700 mb-1">
-                Ticket Prefix
+                {t('settings.general.defaults.ticketPrefix')}
               </label>
               <input
                 type="text"
@@ -226,11 +229,11 @@ export const SettingsPage: React.FC = () => {
                 value={formData.TICKET_PREFIX}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 uppercase"
-                placeholder="e.g. TKT"
+                placeholder={t('settings.general.defaults.ticketPrefixPlaceholder')}
                 maxLength={10}
               />
               <p className="mt-1 text-sm text-slate-500">
-                Tickets will be numbered as {formData.TICKET_PREFIX || 'TKT'}-1001.
+                {t('settings.general.defaults.ticketPrefixHint', { prefix: formData.TICKET_PREFIX || 'TKT' })}
               </p>
             </div>
           </div>
@@ -240,12 +243,12 @@ export const SettingsPage: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
             <Mail className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Agent Communication</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('settings.general.communication.title')}</h2>
           </div>
           <div className="p-6">
             <div>
               <label htmlFor="DEFAULT_EMAIL_SIGNATURE" className="block text-sm font-medium text-slate-700 mb-1">
-                Default Email Signature
+                {t('settings.general.communication.signature')}
               </label>
               <textarea
                 id="DEFAULT_EMAIL_SIGNATURE"
@@ -255,10 +258,10 @@ export const SettingsPage: React.FC = () => {
                 rows={4}
                 maxLength={5000}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-                placeholder="e.g. --&#10;Thank you,&#10;The Support Team"
+                placeholder={t('settings.general.communication.signaturePlaceholder')}
               />
               <p className="mt-1 text-sm text-slate-500">
-                This signature will be appended to agent replies if they haven't set a personal one.
+                {t('settings.general.communication.signatureHint')}
               </p>
             </div>
           </div>
@@ -268,15 +271,15 @@ export const SettingsPage: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
             <Cloud className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Cloudflare API Credentials</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('settings.general.cloudflare.title')}</h2>
           </div>
           <div className="p-6 space-y-4">
             <p className="text-sm text-slate-500 mb-4">
-              Configure your Cloudflare credentials to monitor usage and costs directly from the dashboard.
+              {t('settings.general.cloudflare.description')}
             </p>
             <div>
               <label htmlFor="CLOUDFLARE_ACCOUNT_ID" className="block text-sm font-medium text-slate-700 mb-1">
-                Cloudflare Account ID
+                {t('settings.general.cloudflare.accountId')}
               </label>
               <input
                 type="text"
@@ -285,12 +288,12 @@ export const SettingsPage: React.FC = () => {
                 value={formData.CLOUDFLARE_ACCOUNT_ID}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm"
-                placeholder="e.g. 1234567890abcdef1234567890abcdef"
+                placeholder={t('settings.general.cloudflare.accountIdPlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="CLOUDFLARE_API_TOKEN" className="block text-sm font-medium text-slate-700 mb-1">
-                Cloudflare API Token
+                {t('settings.general.cloudflare.apiToken')}
               </label>
               <input
                 type="password"
@@ -299,10 +302,12 @@ export const SettingsPage: React.FC = () => {
                 value={formData.CLOUDFLARE_API_TOKEN}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm"
-                placeholder="Enter your API token"
+                placeholder={t('settings.general.cloudflare.apiTokenPlaceholder')}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Requires <strong>Account Analytics: Read</strong> permissions. For security, this value is masked. Provide a new token only if you wish to overwrite the existing one.
+                {t('settings.general.cloudflare.apiTokenHintRequires')}{' '}
+                <strong>{t('settings.general.cloudflare.apiTokenHintScopes')}</strong>{' '}
+                {t('settings.general.cloudflare.apiTokenHintRest')}
               </p>
             </div>
           </div>
@@ -312,15 +317,15 @@ export const SettingsPage: React.FC = () => {
         <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
             <Shield className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Security & Authentication</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('settings.general.security.title')}</h2>
           </div>
           <div className="p-6 space-y-4">
             <p className="text-sm text-slate-500 mb-4">
-              Configure Cloudflare Turnstile to protect your Customer Portal from spam and bots.
+              {t('settings.general.security.description')}
             </p>
             <div>
               <label htmlFor="TURNSTILE_SITE_KEY" className="block text-sm font-medium text-slate-700 mb-1">
-                Turnstile Site Key
+                {t('settings.general.security.siteKey')}
               </label>
               <input
                 type="text"
@@ -329,12 +334,12 @@ export const SettingsPage: React.FC = () => {
                 value={formData.TURNSTILE_SITE_KEY}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm"
-                placeholder="e.g. 1x00000000000000000000AA"
+                placeholder={t('settings.general.security.siteKeyPlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="TURNSTILE_SECRET_KEY" className="block text-sm font-medium text-slate-700 mb-1">
-                Turnstile Secret Key
+                {t('settings.general.security.secretKey')}
               </label>
               <input
                 type="password"
@@ -343,10 +348,10 @@ export const SettingsPage: React.FC = () => {
                 value={formData.TURNSTILE_SECRET_KEY}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm"
-                placeholder="Enter your Turnstile secret key"
+                placeholder={t('settings.general.security.secretKeyPlaceholder')}
               />
               <p className="mt-1 text-xs text-slate-500">
-                For security, this value is masked. Provide a new key only if you wish to overwrite the existing one.
+                {t('settings.general.security.secretKeyHint')}
               </p>
             </div>
           </div>

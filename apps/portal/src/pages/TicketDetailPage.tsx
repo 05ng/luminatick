@@ -4,8 +4,11 @@ import { portalApi } from '../api/client';
 import type { Ticket, Article } from '../types';
 import { Loader2, ArrowLeft, Paperclip, Send, X } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export function TicketDetailPage() {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -35,7 +38,7 @@ export function TicketDetailPage() {
       setTicket(data.ticket);
       setArticles(data.articles);
     } catch (err: any) {
-      if (!silent) setError(err.message || 'Failed to load ticket details');
+      if (!silent) setError(err.message || t('tickets.loadFailedDetail'));
     } finally {
       if (!silent) setLoading(false);
     }
@@ -126,7 +129,7 @@ export function TicketDetailPage() {
       setAttachments([]);
       await fetchTicket();
     } catch (err: any) {
-      alert(err.message || 'Failed to send reply');
+      alert(err.message || t('tickets.sendReplyFailed'));
     } finally {
       setSending(false);
     }
@@ -146,8 +149,8 @@ export function TicketDetailPage() {
   if (error || !ticket) {
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-        {error || 'Ticket not found'}
-        <Link to="/tickets" className="block mt-4 text-brand-600 hover:underline">Back to Tickets</Link>
+        {error || t('tickets.notFound')}
+        <Link to="/tickets" className="block mt-4 text-brand-600 hover:underline">{t('tickets.backToTickets')}</Link>
       </div>
     );
   }
@@ -166,7 +169,7 @@ export function TicketDetailPage() {
             </span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Ticket {ticketPrefix}{ticket.ticket_no} • Created {format(new Date(ticket.created_at), 'MMM d, yyyy h:mm a')}
+            {t('tickets.ticketLabel', { no: `${ticketPrefix}${ticket.ticket_no}` })} • {t('tickets.createdAt', { date: format(new Date(ticket.created_at), 'MMM d, yyyy h:mm a', { locale: i18n.language.startsWith('zh') ? zhTW : undefined }) })}
           </p>
         </div>
       </div>
@@ -180,7 +183,7 @@ export function TicketDetailPage() {
               <div key={article.id} className={`flex flex-col ${isCustomer ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-gray-600">
-                    {isCustomer ? 'You' : 'Support Team'}
+                    {isCustomer ? t('tickets.you') : t('tickets.supportTeam')}
                   </span>
                   <span className="text-xs text-gray-400">
                     {formatDistanceToNow(new Date(article.created_at), { addSuffix: true })}
@@ -206,7 +209,7 @@ export function TicketDetailPage() {
                           }`}
                         >
                           <Paperclip className="w-4 h-4" />
-                          <span className="truncate flex-1">{att.filename || 'Attachment'}</span>
+                          <span className="truncate flex-1">{att.filename || t('tickets.attachment')}</span>
                           <span className="text-xs opacity-75">
                             {Math.round(att.size / 1024)} KB
                           </span>
@@ -226,7 +229,7 @@ export function TicketDetailPage() {
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your reply here..."
+                placeholder={t('tickets.replyPlaceholder')}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 resize-none"
                 rows={3}
               />
@@ -266,7 +269,7 @@ export function TicketDetailPage() {
                     disabled={sending}
                   >
                     <Paperclip className="w-5 h-5" />
-                    <span className="text-sm font-medium">Attach Files</span>
+                    <span className="text-sm font-medium">{t('tickets.attachFiles')}</span>
                   </button>
                 </div>
                 
@@ -276,7 +279,7 @@ export function TicketDetailPage() {
                   className="flex items-center gap-2 bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  Send Reply
+                  {t('tickets.sendReply')}
                 </button>
               </div>
             </form>
@@ -285,7 +288,7 @@ export function TicketDetailPage() {
         
         {ticket.status === 'resolved' || ticket.status === 'closed' ? (
            <div className="p-4 bg-gray-50 border-t border-gray-200 text-center text-sm text-gray-500">
-             This ticket is {ticket.status}. You cannot reply to it.
+             {t('tickets.closedNotice', { status: ticket.status })}
            </div>
         ) : null}
       </div>
