@@ -5,12 +5,14 @@ import { useAuthStore } from '../store/authStore';
 import { dashboardApi } from '../api/client';
 import { AuthResponse } from '../types';
 import { Shield, KeyRound, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SetupResponse {
   provisioning_uri: string;
 }
 
 export function MfaPage() {
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export function MfaPage() {
           const data = await dashboardApi.post<SetupResponse>('/auth/mfa/setup');
           setSetupData(data);
         } catch (err: any) {
-          setError(err.message || 'Failed to start MFA setup');
+          setError(err.message || t('mfa.setupFailed'));
         } finally {
           setLoading(false);
         }
@@ -56,7 +58,7 @@ export function MfaPage() {
       setAuth(data.token, data.user);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Invalid MFA code');
+      setError(err.message || t('mfa.invalidCode'));
     } finally {
       setLoading(false);
     }
@@ -88,12 +90,12 @@ export function MfaPage() {
             )}
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {isSetupMode ? 'Set up Two-Factor Authentication' : 'Two-Factor Authentication'}
+            {isSetupMode ? t('mfa.setupTitle') : t('mfa.title')}
           </h1>
           <p className="text-slate-500 mt-2">
             {isSetupMode 
-              ? 'Your account requires an additional layer of security. Please scan the QR code with your authenticator app.'
-              : 'Enter the 6-digit code from your authenticator app'}
+              ? t('mfa.setupDesc')
+              : t('mfa.verifyDesc')}
           </p>
         </div>
 
@@ -110,7 +112,7 @@ export function MfaPage() {
               <QRCodeSVG value={setupData.provisioning_uri} size={180} />
             </div>
             <p className="text-xs text-gray-500 max-w-[250px] mx-auto">
-              If you can't scan the QR code, manually enter this secret key:<br/>
+              {t('mfa.qrFallback')}<br/>
               <code className="bg-gray-100 px-2 py-1 rounded mt-2 inline-block font-mono text-sm break-all">
                 {getSecretFromUri(setupData.provisioning_uri)}
               </code>
@@ -121,7 +123,7 @@ export function MfaPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
-              Authentication Code
+              {t('mfa.authCode')}
             </label>
             <input
               type="text"
@@ -139,7 +141,7 @@ export function MfaPage() {
             disabled={loading || code.length !== 6 || (isSetupMode && !setupData)}
             className="btn btn-primary w-full h-11 text-base font-medium"
           >
-            {loading ? 'Verifying...' : isSetupMode ? 'Verify & Enable' : 'Verify Code'}
+            {loading ? t('mfa.verifying') : isSetupMode ? t('mfa.verifyAndEnable') : t('mfa.verify')}
           </button>
         </form>
       </div>

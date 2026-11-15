@@ -111,8 +111,23 @@ describe("Customer Handler Integration Tests", () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.success).toBe(true);
-      expect(mockRequestAuth).toHaveBeenCalledWith("test@example.com", "magic_link", "http://localhost:5173");
+      expect(mockRequestAuth).toHaveBeenCalledWith("test@example.com", "magic_link", "http://localhost:5173", "en");
     });
+    it("should pass resolved locale to requestAuth", async () => {
+      const res = await customer.request(
+        "/auth/request",
+        {
+          method: "POST",
+          body: JSON.stringify({ email: "test@example.com", type: "otp", baseUrl: "http://localhost:5173", locale: "zh-TW;q=1.0" }),
+          headers: { "Content-Type": "application/json" },
+        },
+        { DB: mockDB as any, JWT_SECRET, NOTIFICATION_DO: mockDO as any }
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockRequestAuth).toHaveBeenCalledWith("test@example.com", "otp", "http://localhost:5173", "zh-TW");
+    });
+
   });
 
   describe("POST /auth/verify", () => {

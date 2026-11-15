@@ -5,8 +5,11 @@ import { portalApi } from '../api/client';
 import type { Ticket, PaginatedResponse } from '../types';
 import { Loader2, Plus, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export function TicketListPage() {
+  const { t, i18n } = useTranslation();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketPrefix, setTicketPrefix] = useState<string>('#');
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,7 @@ export function TicketListPage() {
       setTickets(response.data);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || 'Failed to load tickets');
+      setError(error.message || t('tickets.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +77,7 @@ export function TicketListPage() {
       setNewMessage('');
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message || 'Failed to create ticket');
+      alert(error.message || t('tickets.createFailed'));
     } finally {
       setCreatingTicket(false);
       turnstileRef.current?.reset();
@@ -99,40 +102,40 @@ export function TicketListPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Your Tickets</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('tickets.yourTickets')}</h1>
         <button
           onClick={() => setIsCreating(!isCreating)}
           className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          New Ticket
+          {t('tickets.newTicket')}
         </button>
       </div>
 
       {isCreating && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold mb-4">Create New Ticket</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('tickets.createNewTicket')}</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Subject</label>
+              <label className="block text-sm font-medium text-gray-700">{t('tickets.subject')}</label>
               <input
                 type="text"
                 required
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                placeholder="What do you need help with?"
+                placeholder={t('tickets.subjectPlaceholder')}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Message</label>
+              <label className="block text-sm font-medium text-gray-700">{t('tickets.message')}</label>
               <textarea
                 required
                 rows={4}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                placeholder="Describe your issue in detail..."
+                placeholder={t('tickets.messagePlaceholder')}
               />
             </div>
             <div className="flex justify-end gap-3">
@@ -143,7 +146,7 @@ export function TicketListPage() {
                   options={{ size: 'invisible', execution: 'execute' }}
                   onSuccess={(token) => submitTicket(token)}
                   onError={() => {
-                    alert('Security check failed. Please try again.');
+                    alert(t('tickets.securityCheckFailed'));
                     setCreatingTicket(false);
                     turnstileRef.current?.reset();
                   }}
@@ -154,7 +157,7 @@ export function TicketListPage() {
                 onClick={() => setIsCreating(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
               >
-                Cancel
+                {t('tickets.cancel')}
               </button>
               <button
                 type="submit"
@@ -162,7 +165,7 @@ export function TicketListPage() {
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md disabled:opacity-50"
               >
                 {creatingTicket && <Loader2 className="w-4 h-4 animate-spin" />}
-                Create Ticket
+                {t('tickets.create')}
               </button>
             </div>
           </form>
@@ -173,7 +176,7 @@ export function TicketListPage() {
         {tickets.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
             <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">You haven't created any tickets yet.</p>
+            <p className="text-lg">{t('tickets.noTickets')}</p>
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
@@ -190,9 +193,9 @@ export function TicketListPage() {
                     </span>
                   </div>
                   <div className="mt-2 text-sm text-gray-500 flex items-center gap-4">
-                    <span>Created {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</span>
+                    <span>{t('tickets.createdAgo', { time: formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: i18n.language.startsWith('zh') ? zhTW : undefined }) })}</span>
                     <span>•</span>
-                    <span className="capitalize text-gray-700 font-medium">Priority: {ticket.priority}</span>
+                    <span className="capitalize text-gray-700 font-medium">{t('tickets.priority', { priority: ticket.priority })}</span>
                   </div>
                 </Link>
               </li>

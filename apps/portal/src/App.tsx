@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from './store/authStore';
 import { portalApi } from './api/client';
 import { Layout } from './components/Layout';
@@ -9,10 +10,11 @@ import { TicketListPage } from './pages/TicketListPage';
 import { TicketDetailPage } from './pages/TicketDetailPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>;
   }
 
   if (!isAuthenticated) {

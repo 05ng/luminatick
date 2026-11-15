@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/authStore';
+import i18n from '../i18n';
 
 let BASE_URL = '/api';
 if (import.meta.env.VITE_API_URL) {
@@ -26,28 +27,33 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError(i18n.t('errors.network'), 0);
+  }
 
   if (response.status === 401) {
     useAuthStore.getState().logout();
     window.location.href = '/login';
-    throw new ApiError('Unauthorized', 401);
+    throw new ApiError(i18n.t('errors.http.401'), 401);
   }
 
   if (!response.ok) {
-    let errorMessage = `Request failed with status ${response.status}`;
+    const statusKey = `errors.http.${response.status}`;
+    const fallback = i18n.exists(statusKey) ? i18n.t(statusKey) : i18n.t('errors.http.default');
+    let errorMessage: string | undefined;
     try {
       const error = await response.json();
-      errorMessage = error.error || error.message || errorMessage;
-    } catch (e) {
-      if (response.status === 404) {
-        errorMessage = 'Resource not found (404)';
-      }
+      errorMessage = error.error || error.message;
+    } catch {
+      // Non-JSON error body (e.g. proxy-generated 502 page) — keep the localized fallback.
     }
-    throw new ApiError(errorMessage, response.status);
+    throw new ApiError(errorMessage || fallback, response.status);
   }
 
   return response.json();
@@ -76,7 +82,7 @@ export const dashboardApi = {
       } catch (e) {}
     }
     const res = await fetch(`${BASE_URL}${path}`, { headers });
-    if (!res.ok) throw new Error('Failed to download');
+    if (!res.ok) throw new Error(i18n.t('errors.download'));
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

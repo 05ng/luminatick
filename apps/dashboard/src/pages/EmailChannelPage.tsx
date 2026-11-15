@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi } from '../api/client';
 import { useGroups } from '../hooks/useGroups';
@@ -18,6 +19,7 @@ interface SupportEmail {
 }
 
 export function EmailChannelPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,7 +64,7 @@ export function EmailChannelPage() {
       setTimeout(() => setResendSuccess(false), 3000);
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     } catch (err: any) {
-      setError(err.message || 'Failed to save Resend settings');
+      setError(err.message || t('email.errors.saveResend'));
     } finally {
       setSavingResend(false);
     }
@@ -86,7 +88,7 @@ export function EmailChannelPage() {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.message || 'Failed to add email');
+      setError(err.message || t('email.errors.addEmail'));
     }
   });
 
@@ -107,8 +109,8 @@ export function EmailChannelPage() {
     <div className="max-w-5xl">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Email Channels</h1>
-          <p className="text-slate-500 mt-1">Manage inbound support email addresses</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('email.title')}</h1>
+          <p className="text-slate-500 mt-1">{t('email.subtitle')}</p>
         </div>
         {!isAdding && (
           <button
@@ -116,7 +118,7 @@ export function EmailChannelPage() {
             className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Add Email
+            {t('email.addEmail')}
           </button>
         )}
       </div>
@@ -128,15 +130,15 @@ export function EmailChannelPage() {
             <Settings className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Resend Integration</h2>
-            <p className="text-sm text-slate-500">Configure your Resend API credentials for outbound emails.</p>
+            <h2 className="text-lg font-semibold text-slate-900">{t('email.resendTitle')}</h2>
+            <p className="text-sm text-slate-500">{t('email.resendDesc')}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Resend API Key
+              {t('email.resendApiKey')}
             </label>
             <input
               type="password"
@@ -145,11 +147,11 @@ export function EmailChannelPage() {
               onChange={e => setResendApiKey(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono text-sm"
             />
-            <p className="text-xs text-slate-500 mt-1">Required to send outbound email replies.</p>
+            <p className="text-xs text-slate-500 mt-1">{t('email.resendApiKeyHint')}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Default From Email
+              {t('email.defaultFromEmail')}
             </label>
             <input
               type="email"
@@ -158,18 +160,18 @@ export function EmailChannelPage() {
               onChange={e => setResendFromEmail(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono text-sm"
             />
-            <p className="text-xs text-slate-500 mt-1">Fallback email if a group email is not configured.</p>
+            <p className="text-xs text-slate-500 mt-1">{t('email.defaultFromEmailHint')}</p>
           </div>
         </div>
         <div className="mt-4 flex items-center justify-end gap-3">
-          {resendSuccess && <span className="text-sm text-green-600 flex items-center gap-1"><Check className="w-4 h-4"/> Saved successfully</span>}
+          {resendSuccess && <span className="text-sm text-green-600 flex items-center gap-1"><Check className="w-4 h-4"/> {t('email.savedSuccessfully')}</span>}
           <button
             onClick={saveResendSettings}
             disabled={savingResend || !resendApiKey || !resendFromEmail}
             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {savingResend ? 'Saving...' : 'Save Configuration'}
+            {savingResend ? t('email.saving') : t('email.saveConfiguration')}
           </button>
         </div>
       </div>
@@ -177,12 +179,12 @@ export function EmailChannelPage() {
       {isAdding && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">Add Support Email</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t('email.addSupportEmail')}</h2>
             <button 
               onClick={() => { setIsAdding(false); setError(null); }}
               className="text-slate-400 hover:text-slate-600"
             >
-              Cancel
+              {t('email.cancel')}
             </button>
           </div>
 
@@ -197,7 +199,7 @@ export function EmailChannelPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Email Address *
+                  {t('email.emailAddress')}
                 </label>
                 <input
                   type="email"
@@ -210,11 +212,11 @@ export function EmailChannelPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Display Name
+                  {t('email.displayName')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Support Team"
+                  placeholder={t('email.displayNamePlaceholder')}
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
@@ -225,20 +227,20 @@ export function EmailChannelPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Assign to Group
+                  {t('email.assignToGroup')}
                 </label>
                 <select
                   value={formData.group_id}
                   onChange={e => setFormData({ ...formData, group_id: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 >
-                  <option value="">(No specific group)</option>
+                  <option value="">{t('email.noSpecificGroup')}</option>
                   {groups?.map(g => (
                     <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
                 </select>
                 <p className="text-xs text-slate-500 mt-1">
-                  Tickets from this email will be automatically assigned to this group.
+                  {t('email.assignToGroupHint')}
                 </p>
               </div>
             </div>
@@ -252,7 +254,7 @@ export function EmailChannelPage() {
                 className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
               />
               <label htmlFor="is_default" className="text-sm text-slate-700">
-                Set as default outbound email
+                {t('email.setAsDefault')}
               </label>
             </div>
 
@@ -262,7 +264,7 @@ export function EmailChannelPage() {
                 disabled={createEmail.isPending}
                 className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
               >
-                {createEmail.isPending ? 'Saving...' : 'Save Email'}
+                {createEmail.isPending ? t('email.saving') : t('email.saveEmail')}
               </button>
             </div>
           </form>
@@ -271,12 +273,12 @@ export function EmailChannelPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Loading emails...</div>
+          <div className="p-8 text-center text-slate-500">{t('email.loading')}</div>
         ) : emails?.length === 0 ? (
           <div className="p-12 text-center">
             <Mail className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-1">No email channels</h3>
-            <p className="text-slate-500">Add an email address to start receiving support tickets via email.</p>
+            <h3 className="text-lg font-medium text-slate-900 mb-1">{t('email.noChannels')}</h3>
+            <p className="text-slate-500">{t('email.noChannelsDesc')}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -291,7 +293,7 @@ export function EmailChannelPage() {
                       <p className="font-medium text-slate-900">{email.email_address}</p>
                       {email.is_default && (
                         <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Default
+                          <Check className="w-3 h-3" /> {t('email.defaultBadge')}
                         </span>
                       )}
                     </div>
@@ -299,9 +301,9 @@ export function EmailChannelPage() {
                       {email.name && <span>{email.name}</span>}
                       {email.name && <span className="text-slate-300">•</span>}
                       {email.group_id && groups ? (
-                        <span>Group: {groups.find(g => g.id === email.group_id)?.name || 'Unknown'}</span>
+                        <span>{t('email.groupLabel', { name: groups.find(g => g.id === email.group_id)?.name || t('email.unknownGroup') })}</span>
                       ) : (
-                        <span>Unassigned</span>
+                        <span>{t('email.unassigned')}</span>
                       )}
                     </div>
                   </div>
@@ -310,13 +312,13 @@ export function EmailChannelPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      if (confirm('Are you sure you want to remove this email channel?')) {
+                      if (confirm(t('email.confirmRemove'))) {
                         deleteEmail.mutate(email.id);
                       }
                     }}
                     disabled={deleteEmail.isPending}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Remove email"
+                    title={t('email.removeEmail')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TicketForm from './components/TicketForm';
 import AiChat from './components/AiChat';
 import { BASE_URL } from './api';
+import { t } from './i18n';
 
 const App: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +18,7 @@ const App: React.FC = () => {
         // Fallback config if not found
         setConfig({
           primaryColor: '#3b82f6',
-          title: 'How can we help?',
+          title: t('fallbackTitle'),
           features: {
             aiChat: true,
             ticketForm: true,
@@ -49,7 +50,7 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab('chat')}
                 className={`flex-1 py-2 text-sm font-medium transition-colors ${activeTab === 'chat' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                AI Chat
+                {t('aiChat')}
               </button>
             )}
             {config.features.ticketForm && (
@@ -57,7 +58,7 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab('ticket')}
                 className={`flex-1 py-2 text-sm font-medium transition-colors ${activeTab === 'ticket' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                New Ticket
+                {t('newTicket')}
               </button>
             )}
           </div>
@@ -68,7 +69,7 @@ const App: React.FC = () => {
           </div>
           
           <div className="p-2 text-center text-[10px] text-gray-400 border-t border-gray-100">
-            Powered by Luminatick
+            {t('poweredBy')}
           </div>
         </div>
       )}

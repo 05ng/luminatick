@@ -3,8 +3,11 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { portalApi } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { Loader2, Ticket, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export function VerifyPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,7 +39,7 @@ export function VerifyPage() {
       login(response.user);
       navigate('/tickets', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Invalid or expired login code.');
+      setError(err.message || t('verify.invalidCode'));
       setLoading(false);
     }
   };
@@ -50,10 +53,11 @@ export function VerifyPage() {
   // If we're verifying a magic link from URL, show a loading state
   if (tokenParam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+        <div className="absolute top-4 right-4 z-10"><LanguageSwitcher /></div>
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
           <Loader2 className="mx-auto w-12 h-12 text-brand-600 animate-spin mb-4" />
-          <h2 className="text-2xl font-extrabold text-gray-900">Verifying your login...</h2>
+          <h2 className="text-2xl font-extrabold text-gray-900">{t('verify.verifyingTitle')}</h2>
         </div>
       </div>
     );
@@ -68,13 +72,13 @@ export function VerifyPage() {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Enter Verification Code
+          {t('verify.enterCodeTitle')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           {initialEmail ? (
-            <>We sent a 6-digit code to <strong>{initialEmail}</strong></>
+            <>{t('verify.sentCodeTo', { email: initialEmail })}</>
           ) : (
-            'Enter the 6-digit code sent to your email'
+            t('verify.enterCodeDesc')
           )}
         </p>
       </div>
@@ -90,7 +94,7 @@ export function VerifyPage() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="code" className="block text-sm font-medium text-gray-700">
-                Authentication Code
+                {t('verify.authCode')}
               </label>
               <div className="mt-1">
                 <input
@@ -116,7 +120,7 @@ export function VerifyPage() {
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed items-center gap-2"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                {loading ? 'Verifying...' : 'Verify Code'}
+                {loading ? t('verify.verifying') : t('verify.verify')}
               </button>
             </div>
           </form>
@@ -126,7 +130,7 @@ export function VerifyPage() {
               onClick={() => navigate('/login')}
               className="text-sm text-brand-600 hover:text-brand-500 font-medium"
             >
-              Request a new code
+              {t('verify.requestNewCode')}
             </button>
           </div>
         </div>

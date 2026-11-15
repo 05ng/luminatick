@@ -2,6 +2,7 @@ import { Env } from '../bindings';
 import { User } from '../types';
 import { EmailService } from './email/outbound.service';
 import { AuthService } from './auth/auth.service';
+import { emailTemplates, resolveLocale } from '../utils/i18n';
 
 export class CustomerAuthService {
   private emailService: EmailService;
@@ -27,8 +28,9 @@ export class CustomerAuthService {
    * Request Magic Link / OTP for a customer.
    * If the customer doesn't exist, creates a shadow user.
    */
-  async requestAuth(email: string, type: 'magic_link' | 'otp' = 'magic_link', baseUrl?: string): Promise<void> {
+  async requestAuth(email: string, type: 'magic_link' | 'otp' = 'magic_link', baseUrl?: string, locale?: string): Promise<void> {
     const lowerEmail = email.toLowerCase().trim();
+    const tpl = emailTemplates[resolveLocale(locale)];
 
     // 1. Find or create user
     let user = await this.env.DB.prepare(
@@ -72,9 +74,9 @@ export class CustomerAuthService {
       try {
         await this.emailService.send({
           to: [lowerEmail],
-          subject: 'Your Login Link',
-          html: `<p>Hello,</p><p>Click the link below to log in to your portal:</p><p><a href="${url}">${url}</a></p><p>This link expires in 15 minutes.</p>`,
-          text: `Hello,\n\nClick the link below to log in to your portal:\n${url}\n\nThis link expires in 15 minutes.`,
+          subject: tpl.magicLinkSubject,
+          html: tpl.magicLinkBody(url).html,
+          text: tpl.magicLinkBody(url).text,
         });
       } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -101,9 +103,9 @@ export class CustomerAuthService {
       try {
         await this.emailService.send({
           to: [lowerEmail],
-          subject: 'Your Login Code',
-          html: `<p>Hello,</p><p>Your login code is: <strong>${otp}</strong></p><p>This code expires in 15 minutes.</p>`,
-          text: `Hello,\n\nYour login code is: ${otp}\n\nThis code expires in 15 minutes.`,
+          subject: tpl.otpSubject,
+          html: tpl.otpBody(otp).html,
+          text: tpl.otpBody(otp).text,
         });
       } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : String(error);

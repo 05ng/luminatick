@@ -22,9 +22,11 @@ import {
   Check
 , Paperclip } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: ticket, isLoading, error } = useTicket(id!);
   const { data: groups } = useGroups();
@@ -68,7 +70,7 @@ export function TicketDetailPage() {
       // Invalidate query to refresh article state
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
     } catch (err: any) {
-      alert('Failed to mark as QA: ' + err.message);
+      alert(t('ticketDetail.errors.markQa') + ': ' + err.message);
     }
   };
 
@@ -79,7 +81,7 @@ export function TicketDetailPage() {
       const data = await dashboardApi.get<{ suggestion: string }>(`/knowledge/tickets/${id}/ai-suggest`);
       setSuggestion(data.suggestion);
     } catch (err: any) {
-      alert('Failed to generate suggestion: ' + err.message);
+      alert(t('ticketDetail.errors.generateSuggestion') + ': ' + err.message);
     } finally {
       setIsGeneratingSuggestion(false);
     }
@@ -116,14 +118,14 @@ export function TicketDetailPage() {
       // Refresh ticket details to show new article
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
     } catch (err: any) {
-      alert('Failed to send reply: ' + err.message);
+      alert(t('ticketDetail.errors.sendReply') + ': ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-slate-500">Loading ticket...</div>;
-  if (!ticket) return <div className="p-8 text-center text-slate-500">Ticket not found.</div>;
+  if (isLoading) return <div className="p-8 text-center text-slate-500">{t('ticketDetail.loading')}</div>;
+  if (!ticket) return <div className="p-8 text-center text-slate-500">{t('ticketDetail.notFound')}</div>;
 
   return (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -131,7 +133,7 @@ export function TicketDetailPage() {
         <div className="flex items-center justify-between">
           <Link to="/tickets" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to Tickets
+            {t('ticketDetail.backToTickets')}
           </Link>
           <div className="flex items-center gap-2">
             <select 
@@ -139,10 +141,10 @@ export function TicketDetailPage() {
               onChange={(e) => handleStatusChange(e.target.value)}
               className="bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
             >
-              <option value="open">Open</option>
-              <option value="pending">Pending</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <option value="open">{t('ticketStatus.open')}</option>
+              <option value="pending">{t('ticketStatus.pending')}</option>
+              <option value="resolved">{t('ticketStatus.resolved')}</option>
+              <option value="closed">{t('ticketStatus.closed')}</option>
             </select>
           </div>
         </div>
@@ -159,7 +161,7 @@ export function TicketDetailPage() {
                       setTimeout(() => setCopied(false), 2000);
                     }}
                     className="group/copy flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-sm font-mono font-bold shadow-sm cursor-pointer hover:bg-slate-800 transition-colors"
-                    title="Click to copy ticket number"
+                    title={t('tickets.copyNumber')}
                   >
                     {ticketPrefix}{ticket.ticket_no || ''}
                     {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400 group-hover/copy:text-white transition-colors" />}
@@ -173,7 +175,7 @@ export function TicketDetailPage() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
-                    Opened {new Date(ticket.created_at).toLocaleDateString()}
+                    {t('ticketDetail.openedAt', { date: new Date(ticket.created_at).toLocaleDateString() })}
                   </span>
                 </div>
               </div>
@@ -187,7 +189,7 @@ export function TicketDetailPage() {
                         <div 
                           key={i}
                           className="w-8 h-8 rounded-full bg-brand-500 border-2 border-white flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                          title={`${viewer.name} is viewing this ticket`}
+                          title={t('ticketDetail.viewingTooltip', { name: viewer.name })}
                         >
                           {viewer.name[0]}
                         </div>
@@ -200,7 +202,7 @@ export function TicketDetailPage() {
                     </div>
                     <span className="text-[10px] font-bold text-brand-600 uppercase tracking-tighter flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse" />
-                      Live Viewers
+                      {t('ticketDetail.liveViewers')}
                     </span>
                   </div>
                 )}
@@ -233,7 +235,13 @@ export function TicketDetailPage() {
                 )}>
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <span className="text-[10px] font-bold uppercase opacity-70 tracking-widest">
-                      {article.sender_type} {article.is_internal && '• Internal Note'}
+                      {t(
+                        article.sender_type === 'agent'
+                          ? 'ticketDetail.senderAgent'
+                          : article.sender_type === 'system'
+                            ? 'ticketDetail.senderSystem'
+                            : 'ticketDetail.senderCustomer'
+                      )} {article.is_internal ? `• ${t('ticketDetail.internalNote')}` : null}
                     </span>
                     <span className="text-[10px] opacity-70">
                       {new Date(article.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -278,7 +286,7 @@ export function TicketDetailPage() {
                           article.qa_type === 'question' ? "bg-white text-brand-600 border-white" : "text-white/70 border-white/20 hover:border-white/50"
                         )}
                       >
-                        {article.qa_type === 'question' ? '✓ Question' : 'Mark as Question'}
+                        {article.qa_type === 'question' ? `✓ ${t('ticketDetail.question')}` : t('ticketDetail.markAsQuestion')}
                       </button>
                       <button
                         onClick={() => handleToggleQa(article.id, article.qa_type === 'answer' ? null : 'answer')}
@@ -287,13 +295,13 @@ export function TicketDetailPage() {
                           article.qa_type === 'answer' ? "bg-white text-brand-600 border-white" : "text-white/70 border-white/20 hover:border-white/50"
                         )}
                       >
-                        {article.qa_type === 'answer' ? '✓ Answer' : 'Mark as Answer'}
+                        {article.qa_type === 'answer' ? `✓ ${t('ticketDetail.answer')}` : t('ticketDetail.markAsAnswer')}
                       </button>
                     </div>
                     {article.qa_type && (
                       <span className="flex items-center gap-1 text-[9px] font-bold text-white/90 bg-white/10 px-2 py-0.5 rounded-full border border-white/20">
                         <ShieldCheck className="w-3 h-3" />
-                        INDEXED
+                        {t('ticketDetail.indexed')}
                       </span>
                     )}
                   </div>
@@ -314,7 +322,7 @@ export function TicketDetailPage() {
                       !isInternal ? "bg-brand-600 text-white border-brand-700 shadow-sm" : "text-slate-500 hover:bg-slate-100 border-transparent"
                     )}
                   >
-                    Public Reply
+                    {t('ticketDetail.publicReply')}
                   </button>
                   <button 
                     type="button"
@@ -324,7 +332,7 @@ export function TicketDetailPage() {
                       isInternal ? "bg-amber-500 text-white border-amber-600 shadow-sm" : "text-slate-500 hover:bg-slate-100 border-transparent"
                     )}
                   >
-                    Internal Note
+                    {t('ticketDetail.internalNote')}
                   </button>
                 </div>
                 
@@ -335,7 +343,7 @@ export function TicketDetailPage() {
                   className="flex items-center gap-2 text-xs font-bold text-brand-600 hover:text-brand-700 px-3 py-1.5 bg-brand-50 rounded-lg transition-colors border border-brand-100"
                 >
                   <Activity className="w-3.5 h-3.5" />
-                  {isGeneratingSuggestion ? 'Thinking...' : 'AI Suggestion'}
+                  {isGeneratingSuggestion ? t('ticketDetail.thinking') : t('ticketDetail.aiSuggestion')}
                 </button>
               </div>
 
@@ -344,7 +352,7 @@ export function TicketDetailPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      AI Auto-Draft
+                      {t('ticketDetail.aiAutoDraft')}
                     </span>
                     <div className="flex items-center gap-3">
                       <button
@@ -352,14 +360,14 @@ export function TicketDetailPage() {
                         onClick={() => setReply(suggestion)}
                         className="text-[10px] font-bold text-brand-600 hover:bg-brand-100 px-2 py-1 rounded transition-colors"
                       >
-                        Replace All
+                        {t('ticketDetail.replaceAll')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setReply(prev => prev ? `${prev}\n\n${suggestion}` : suggestion)}
                         className="text-[10px] font-bold text-brand-600 hover:bg-brand-100 px-2 py-1 rounded transition-colors"
                       >
-                        Append
+                        {t('ticketDetail.append')}
                       </button>
                       <button
                         type="button"
@@ -382,7 +390,7 @@ export function TicketDetailPage() {
                       ? "bg-amber-50/50 border-amber-200 focus:ring-amber-500/10" 
                       : "bg-slate-50/50 border-slate-200 focus:ring-brand-500/10"
                   )}
-                  placeholder={isInternal ? "Type an internal note only visible to agents..." : "Type your reply to the customer..."}
+                  placeholder={isInternal ? t('ticketDetail.internalPlaceholder') : t('ticketDetail.replyPlaceholder')}
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
                 />
@@ -410,8 +418,8 @@ export function TicketDetailPage() {
                 <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
                   <Info className="w-3 h-3" />
                   {isInternal 
-                    ? "Private note for team coordination." 
-                    : "The customer will receive an email notification."}
+                    ? t('ticketDetail.privateNoteHint') 
+                    : t('ticketDetail.replyHint')}
                 </p>
                 <div className="flex items-center gap-2">
                   <input 
@@ -430,7 +438,7 @@ export function TicketDetailPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="p-2.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
-                    title="Attach files"
+                    title={t('ticketDetail.attachFiles')}
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
@@ -443,7 +451,7 @@ export function TicketDetailPage() {
                     )}
                   >
                     <Send className="w-4 h-4" />
-                    {isInternal ? "Add Note" : "Send Reply"}
+                    {isInternal ? t('ticketDetail.addNote') : t('ticketDetail.sendReply')}
                   </button>
                 </div>
               </div>
@@ -456,33 +464,33 @@ export function TicketDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Info className="w-4 h-4 text-slate-400" />
-            Ticket Details
+            {t('ticketDetail.detailsTitle')}
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Priority</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('common.priority')}</label>
               <div className="mt-1">
                 <select 
                   value={ticket.priority} 
                   onChange={(e) => updateTicket.mutate({ id: ticket.id, priority: e.target.value as any })}
                   className="w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
                 >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
+                  <option value="low">{t('priority.low')}</option>
+                  <option value="normal">{t('priority.normal')}</option>
+                  <option value="high">{t('priority.high')}</option>
+                  <option value="urgent">{t('priority.urgent')}</option>
                 </select>
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned To</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('tickets.assignee')}</label>
               <div className="mt-1">
                 <select 
                   value={ticket.assigned_to || ''} 
                   onChange={(e) => updateTicket.mutate({ id: ticket.id, assigned_to: e.target.value || undefined })}
                   className="w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
                 >
-                  <option value="">Unassigned</option>
+                  <option value="">{t('tickets.unassigned')}</option>
                   {agents?.map(agent => (
                     <option key={agent.id} value={agent.id}>{agent.full_name || agent.email}</option>
                   ))}
@@ -490,14 +498,14 @@ export function TicketDetailPage() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Group</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('tickets.group')}</label>
               <div className="mt-1">
                 <select 
                   value={ticket.group_id || ''} 
                   onChange={(e) => updateTicket.mutate({ id: ticket.id, group_id: e.target.value || undefined })}
                   className="w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
                 >
-                  <option value="">No Group</option>
+                  <option value="">{t('tickets.noGroup')}</option>
                   {groups?.map(group => (
                     <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
@@ -507,7 +515,7 @@ export function TicketDetailPage() {
             
             {ticketFields && ticketFields.filter(f => f.is_active).length > 0 && (
               <div className="pt-4 mt-4 border-t border-slate-200">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Custom Attributes</h4>
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">{t('ticketDetail.customAttributes')}</h4>
                 <div className="space-y-4">
                   {ticketFields.filter(f => f.is_active).map((field) => {
                     const value = ticket.custom_fields ? ticket.custom_fields[field.name] : '';
@@ -535,7 +543,7 @@ export function TicketDetailPage() {
                             onChange={(e) => handleSave(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
                           >
-                            <option value="">Select...</option>
+                            <option value="">{t('ticketDetail.selectPlaceholder')}</option>
                             {field.options.split(',').map(s => s.trim()).filter(Boolean).map((opt) => (
                               <option key={opt} value={opt}>{opt}</option>
                             ))}
@@ -570,7 +578,7 @@ export function TicketDetailPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 animate-in slide-in-from-right-4">
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Eye className="w-4 h-4 text-brand-500" />
-              Active Now
+              {t('ticketDetail.activeNow')}
             </h3>
             <div className="space-y-3">
               {viewers.map((viewer, i) => (
@@ -582,7 +590,7 @@ export function TicketDetailPage() {
                     <p className="text-xs font-bold text-slate-900">{viewer.name}</p>
                     <p className="text-[10px] text-green-600 font-medium flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                      Viewing
+                      {t('ticketDetail.viewing')}
                     </p>
                   </div>
                 </div>

@@ -1,5 +1,7 @@
 # Knowledge Base Setup Guide
 
+**[English](knowledge-base-setup.md) | [繁體中文](zh-TW/knowledge-base-setup.md)**
+
 Luminatick features an AI-first, two-tier Knowledge Base designed for both your customers and your support agents. Because it is natively integrated with Cloudflare Vectorize and Workers AI, every article you create is automatically indexed for semantic search and Retrieval-Augmented Generation (RAG).
 
 This guide explains how to set up your knowledge base and the key differences between the two article tiers.

@@ -11,6 +11,7 @@ import { roleGuard } from "../middleware/role.guard";
 import { rateLimiter } from "../middleware/rate-limiter";
 import { decryptString } from "../utils/crypto";
 import { verifyTurnstileToken } from "../utils/turnstile";
+import { resolveLocale } from "../utils/i18n";
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -44,7 +45,12 @@ app.post('/auth/request', rateLimiter(5, 60000), async (c) => {
 
   const authService = new CustomerAuthService(c.env);
 
-  await authService.requestAuth(body.email, body.type, body.baseUrl);
+  await authService.requestAuth(
+    body.email,
+    body.type,
+    body.baseUrl,
+    resolveLocale(body.locale || c.req.header('Accept-Language'))
+  );
   return c.json({ success: true });
 });
 

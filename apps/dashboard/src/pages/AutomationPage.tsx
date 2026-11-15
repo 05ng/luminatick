@@ -1,37 +1,43 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../api/client';
 import { AutomationRule, AutomationCondition, WebhookConfig, RetentionConfig } from '../types';
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit2, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
 
 const EVENT_TYPES = [
-  { value: 'ticket.created', label: 'Ticket Created' },
-  { value: 'article.created', label: 'Article Created' },
-  { value: 'ticket.updated', label: 'Ticket Updated' },
-  { value: 'scheduled.retention', label: 'Scheduled Retention' },
+  { value: 'ticket.created', labelKey: 'automation.events.ticketCreated' },
+  { value: 'article.created', labelKey: 'automation.events.articleCreated' },
+  { value: 'ticket.updated', labelKey: 'automation.events.ticketUpdated' },
+  { value: 'scheduled.retention', labelKey: 'automation.events.scheduledRetention' },
 ];
 
 const ACTION_TYPES = [
-  { value: 'webhook', label: 'Webhook' },
-  { value: 'retention', label: 'Retention Cleanup' },
+  { value: 'webhook', labelKey: 'automation.actions.webhook' },
+  { value: 'retention', labelKey: 'automation.actions.retention' },
 ];
 
 const FIELDS = [
-  { value: 'ticket.subject', label: 'Ticket Subject' },
-  { value: 'ticket.status', label: 'Ticket Status' },
-  { value: 'ticket.priority', label: 'Ticket Priority' },
-  { value: 'ticket.customer_email', label: 'Customer Email' },
-  { value: 'article.body', label: 'Article Body' },
-  { value: 'article.sender_type', label: 'Sender Type' },
+  { value: 'ticket.subject', labelKey: 'automation.fields.ticketSubject' },
+  { value: 'ticket.status', labelKey: 'automation.fields.ticketStatus' },
+  { value: 'ticket.priority', labelKey: 'automation.fields.ticketPriority' },
+  { value: 'ticket.customer_email', labelKey: 'automation.fields.customerEmail' },
+  { value: 'article.body', labelKey: 'automation.fields.articleBody' },
+  { value: 'article.sender_type', labelKey: 'automation.fields.senderType' },
 ];
 
 const OPERATORS = [
-  { value: 'equals', label: 'Equals' },
-  { value: 'not_equals', label: 'Does Not Equal' },
-  { value: 'contains', label: 'Contains' },
-  { value: 'regex', label: 'Matches Regex' },
+  { value: 'equals', labelKey: 'automation.operators.equals' },
+  { value: 'not_equals', labelKey: 'automation.operators.notEquals' },
+  { value: 'contains', labelKey: 'automation.operators.contains' },
+  { value: 'regex', labelKey: 'automation.operators.regex' },
 ];
 
 export const AutomationPage: React.FC = () => {
+  const { t } = useTranslation();
+  const labelOf = (options: { value: string; labelKey: string }[], value: string) => {
+    const found = options.find((option) => option.value === value);
+    return found ? t(found.labelKey) : value;
+  };
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -49,7 +55,7 @@ export const AutomationPage: React.FC = () => {
       const data = await dashboardApi.get<AutomationRule[]>('/automations');
       setRules(data);
     } catch (error) {
-      setError('Failed to fetch rules');
+      setError(t('automation.errors.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -59,20 +65,20 @@ export const AutomationPage: React.FC = () => {
     try {
       await dashboardApi.patch(`/automations/${id}`, { is_active: !currentStatus });
       setRules(rules.map(r => r.id === id ? { ...r, is_active: !currentStatus } : r));
-      showSuccess('Rule updated');
+      showSuccess(t('automation.messages.ruleUpdated'));
     } catch (error) {
-      setError('Failed to toggle rule');
+      setError(t('automation.errors.toggleFailed'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this rule?')) return;
+    if (!confirm(t('automation.confirmDelete'))) return;
     try {
       await dashboardApi.delete(`/automations/${id}`);
       setRules(rules.filter(r => r.id !== id));
-      showSuccess('Rule deleted');
+      showSuccess(t('automation.messages.ruleDeleted'));
     } catch (error) {
-      setError('Failed to delete rule');
+      setError(t('automation.errors.deleteFailed'));
     }
   };
 
@@ -101,7 +107,7 @@ export const AutomationPage: React.FC = () => {
         if (editForm.conditions) JSON.parse(editForm.conditions);
         if (editForm.action_config) JSON.parse(editForm.action_config);
       } catch (e) {
-        setError('Invalid JSON in conditions or action config');
+        setError(t('automation.errors.invalidJson'));
         return;
       }
 
@@ -113,9 +119,9 @@ export const AutomationPage: React.FC = () => {
         setRules(rules.map(r => r.id === isEditing ? updatedRule : r));
       }
       setIsEditing(null);
-      showSuccess('Rule saved successfully');
+      showSuccess(t('automation.messages.ruleSaved'));
     } catch (error) {
-      setError('Failed to save rule');
+      setError(t('automation.errors.saveFailed'));
     }
   };
 
@@ -156,14 +162,14 @@ export const AutomationPage: React.FC = () => {
     setEditForm({ ...editForm, action_config: JSON.stringify(config) });
   };
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Loading automations...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500">{t('automation.loading')}</div>;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Automation Rules</h1>
-          <p className="text-slate-500">Manage event-driven workflows and data retention.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('automation.title')}</h1>
+          <p className="text-slate-500">{t('automation.subtitle')}</p>
         </div>
         {!isEditing && (
           <button
@@ -171,7 +177,7 @@ export const AutomationPage: React.FC = () => {
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors"
           >
             <Plus size={20} />
-            Create Rule
+            {t('automation.createRule')}
           </button>
         )}
       </div>
@@ -195,7 +201,7 @@ export const AutomationPage: React.FC = () => {
           <div className="bg-white border-2 border-indigo-100 rounded-xl p-6 shadow-lg mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold text-slate-900">
-                {isEditing === 'new' ? 'Create New Automation Rule' : 'Edit Automation Rule'}
+                {isEditing === 'new' ? t('automation.createTitle') : t('automation.editTitle')}
               </h2>
               <button onClick={() => setIsEditing(null)} className="text-slate-400 hover:text-slate-600">
                 <X size={24} />
@@ -205,39 +211,39 @@ export const AutomationPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Rule Name</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('automation.ruleName')}</label>
                   <input
                     type="text"
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="e.g., Slack Notification for Urgent Tickets"
+                    placeholder={t('automation.ruleNamePlaceholder')}
                     value={editForm.name || ''}
                     onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Trigger Event</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('automation.triggerEvent')}</label>
                   <select
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                     value={editForm.event_type}
                     onChange={e => setEditForm({ ...editForm, event_type: e.target.value as any })}
                   >
-                    {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    {EVENT_TYPES.map(evt => <option key={evt.value} value={evt.value}>{t(evt.labelKey)}</option>)}
                   </select>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Action Type</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('automation.actionType')}</label>
                   <select
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                     value={editForm.action_type}
                     onChange={e => setEditForm({ ...editForm, action_type: e.target.value as any })}
                   >
-                    {ACTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    {ACTION_TYPES.map(act => <option key={act.value} value={act.value}>{t(act.labelKey)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">{t('automation.status')}</label>
                   <div className="flex items-center gap-3 h-10">
                     <button 
                       type="button"
@@ -246,7 +252,7 @@ export const AutomationPage: React.FC = () => {
                     >
                       {editForm.is_active ? <ToggleRight className="text-indigo-600" size={40} /> : <ToggleLeft className="text-slate-300" size={40} />}
                     </button>
-                    <span className="font-medium text-slate-700">{editForm.is_active ? 'Active' : 'Paused'}</span>
+                    <span className="font-medium text-slate-700">{editForm.is_active ? t('automation.active') : t('automation.paused')}</span>
                   </div>
                 </div>
               </div>
@@ -254,12 +260,12 @@ export const AutomationPage: React.FC = () => {
 
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-slate-900">Conditions</h3>
+                <h3 className="font-semibold text-slate-900">{t('automation.conditions')}</h3>
                 <button 
                   onClick={addCondition}
                   className="text-sm text-indigo-600 font-medium flex items-center gap-1 hover:underline"
                 >
-                  <Plus size={16} /> Add Condition
+                  <Plus size={16} /> {t('automation.addCondition')}
                 </button>
               </div>
               <div className="space-y-3">
@@ -270,19 +276,19 @@ export const AutomationPage: React.FC = () => {
                       value={cond.field}
                       onChange={e => changeCondition(idx, 'field', e.target.value)}
                     >
-                      {FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                      {FIELDS.map(f => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
                     </select>
                     <select
                       className="w-40 px-3 py-1.5 border border-slate-200 rounded-md text-sm"
                       value={cond.operator}
                       onChange={e => changeCondition(idx, 'operator', e.target.value as any)}
                     >
-                      {OPERATORS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      {OPERATORS.map(o => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
                     </select>
                     <input
                       type="text"
                       className="flex-[2] px-3 py-1.5 border border-slate-200 rounded-md text-sm"
-                      placeholder="Value..."
+                      placeholder={t('automation.valuePlaceholder')}
                       value={cond.value}
                       onChange={e => changeCondition(idx, 'value', e.target.value)}
                     />
@@ -293,18 +299,18 @@ export const AutomationPage: React.FC = () => {
                 ))}
                 {JSON.parse(editForm.conditions || '[]').length === 0 && (
                   <p className="text-sm text-slate-400 italic bg-slate-50 p-4 rounded-lg border border-dashed border-slate-300 text-center">
-                    No conditions. This rule will always run for the selected event.
+                    {t('automation.noConditions')}
                   </p>
                 )}
               </div>
             </div>
 
             <div className="mb-8">
-              <h3 className="font-semibold text-slate-900 mb-4">Action Configuration</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{t('automation.actionConfig')}</h3>
               {editForm.action_type === 'webhook' ? (
                 <div className="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Webhook URL</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('automation.webhookUrl')}</label>
                     <input
                       type="url"
                       className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"
@@ -315,7 +321,7 @@ export const AutomationPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">HTTP Method</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('automation.httpMethod')}</label>
                       <select
                         className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"
                         value={getActionConfig().method || 'POST'}
@@ -331,7 +337,7 @@ export const AutomationPage: React.FC = () => {
                 <div className="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Retention Period (Days)</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('automation.retentionDays')}</label>
                       <input
                         type="number"
                         className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"
@@ -347,7 +353,7 @@ export const AutomationPage: React.FC = () => {
                         onChange={e => updateActionConfig({ ...getActionConfig(), delete_attachments: e.target.checked })}
                         className="w-4 h-4 text-indigo-600 rounded"
                       />
-                      <label htmlFor="del-attachments" className="text-sm text-slate-700">Delete R2 Attachments</label>
+                      <label htmlFor="del-attachments" className="text-sm text-slate-700">{t('automation.deleteAttachments')}</label>
                     </div>
                   </div>
                 </div>
@@ -359,14 +365,14 @@ export const AutomationPage: React.FC = () => {
                 onClick={() => setIsEditing(null)}
                 className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
               >
-                Cancel
+                {t('automation.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 className="bg-indigo-600 text-white px-8 py-2.5 rounded-lg flex items-center gap-2 hover:bg-indigo-700 font-bold shadow-md transition-all active:scale-95"
               >
                 <Save size={20} />
-                Save Automation Rule
+                {t('automation.saveRule')}
               </button>
             </div>
           </div>
@@ -377,13 +383,13 @@ export const AutomationPage: React.FC = () => {
             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="text-slate-400" size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">No automation rules yet</h3>
-            <p className="text-slate-500 mb-6">Create rules to automate your ticket workflows, notify external systems, or manage data retention.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">{t('automation.emptyTitle')}</h3>
+            <p className="text-slate-500 mb-6">{t('automation.emptyDesc')}</p>
             <button 
               onClick={startCreate} 
               className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
             >
-              Create your first rule
+              {t('automation.createFirst')}
             </button>
           </div>
         ) : (
@@ -401,14 +407,14 @@ export const AutomationPage: React.FC = () => {
                   <h3 className="font-bold text-slate-900">{rule.name}</h3>
                   <div className="flex gap-2 mt-1.5">
                     <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full uppercase font-black tracking-widest border border-slate-200">
-                      {rule.event_type}
+                      {labelOf(EVENT_TYPES, rule.event_type)}
                     </span>
                     <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full uppercase font-black tracking-widest border border-indigo-100">
-                      {rule.action_type}
+                      {labelOf(ACTION_TYPES, rule.action_type)}
                     </span>
                     {rule.conditions && JSON.parse(rule.conditions).length > 0 && (
                       <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full uppercase font-black tracking-widest border border-amber-100">
-                        {JSON.parse(rule.conditions).length} Conditions
+                        {t('automation.conditionsCount', { count: JSON.parse(rule.conditions).length })}
                       </span>
                     )}
                   </div>
@@ -419,14 +425,14 @@ export const AutomationPage: React.FC = () => {
                 <button
                   onClick={() => startEdit(rule)}
                   className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                  title="Edit Rule"
+                  title={t('automation.editRule')}
                 >
                   <Edit2 size={20} />
                 </button>
                 <button
                   onClick={() => handleDelete(rule.id)}
                   className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  title="Delete Rule"
+                  title={t('automation.deleteRule')}
                 >
                   <Trash2 size={20} />
                 </button>

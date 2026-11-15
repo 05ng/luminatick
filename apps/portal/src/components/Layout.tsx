@@ -2,8 +2,11 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { portalApi } from '../api/client';
 import { LogOut, Ticket } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Layout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -30,13 +33,14 @@ export function Layout() {
             </Link>
 
             <div className="flex items-center gap-4">
+              <LanguageSwitcher />
               <span className="text-sm text-gray-600">
                 {user?.name} ({user?.email})
               </span>
               <button
                 onClick={handleLogout}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                title="Log out"
+                title={t('layout.logout')}
               >
                 <LogOut className="w-5 h-5" />
               </button>

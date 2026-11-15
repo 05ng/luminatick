@@ -1,5 +1,7 @@
 # Email Setup Guide
 
+**[English](email-setup.md) | [繁體中文](zh-TW/email-setup.md)**
+
 Luminatick is built on Cloudflare Workers, a serverless, event-driven architecture. Because of this, email integration works differently than traditional helpdesk software that continuously polls an email server in the background.
 
 This guide explains the three distinct ways you can approach email setup with Luminatick.

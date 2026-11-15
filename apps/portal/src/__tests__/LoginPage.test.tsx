@@ -50,6 +50,7 @@ describe('LoginPage', () => {
         type: 'magic_link',
         turnstileToken: null,
         baseUrl: 'http://localhost:3000', // JSDOM default origin
+        locale: 'en',
       });
     });
 

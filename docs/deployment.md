@@ -1,5 +1,7 @@
 # Deployment Guide
 
+**[English](deployment.md) | [繁體中文](zh-TW/deployment.md)**
+
 This document explains how to deploy Luminatick to your own Cloudflare environment.
 
 ## Architecture: Option 3 (Hybrid Offloading)
